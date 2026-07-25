@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Welcome</title>
+
+  <script>
+    // Forward ?invite=CODE to createaccount.html
+    const params = new URLSearchParams(window.location.search);
+    const invite = params.get("invite");
+
+    if (invite) {
+      // Redirect WITH referral code
+      window.location.href = "createaccount.html?invite=" + invite;
+    } else {
+      // No referral → default
+      window.location.href = "createaccount.html";
+    }
+  </script>
+</head>
+<body>
+  <p>Redirecting to account creation...</p>
+</body>
+</html>
