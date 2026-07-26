@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Create Account - SpinWinToken</title>
+  <title>Sign In - SpinWinToken</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
   <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
@@ -60,14 +60,21 @@
 
 <body>
   <div class="box">
-    <h1>Create Account</h1>
+    <h1>Sign In</h1>
 
     <input id="email" type="email" placeholder="Email" />
     <input id="password" type="password" placeholder="Password" />
 
-    <button class="btn" onclick="createAccount()">Create Account</button>
+    <button class="btn" onclick="signIn()">Sign In</button>
 
     <p id="msg"></p>
+
+    <!-- ⭐ ONLY CHANGE REQUESTED: Create Account link -->
+    <p style="margin-top:20px;">
+      <a href="createaccount.html" style="color:#ffd700; text-decoration:none;">
+        Create Account
+      </a>
+    </p>
   </div>
 
   <script>
@@ -76,7 +83,7 @@
       "sb_publishable_mBzrAtBTUaUBcXsGpGzB9Q_93NnWOZG"
     );
 
-    async function createAccount() {
+    async function signIn() {
       const msg = document.getElementById("msg");
       msg.textContent = "";
 
@@ -88,25 +95,21 @@
         return;
       }
 
-      // 1. Create Supabase Auth user
-      const { data: authData, error: authError } = await client.auth.signUp({
+      // Sign in user
+      const { data, error } = await client.auth.signInWithPassword({
         email,
         password
       });
 
-      if (authError) {
-        msg.textContent = authError.message;
+      if (error) {
+        msg.textContent = "Incorrect email or password.";
         return;
       }
 
-      // 2. Insert into UsersSQL
-      await client.from("UsersSQL").insert({
-        email: email,
-        referralcode: Math.random().toString(36).substring(2, 10).toUpperCase()
-      });
-
-      msg.textContent = "Account created! Check your email to confirm.";
+      // SUCCESS → go directly to home.html
+      window.location.href = "home.html?email=" + encodeURIComponent(email);
     }
   </script>
 </body>
 </html>
+
