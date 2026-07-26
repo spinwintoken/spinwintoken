@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Create Account - SpinWinToken</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+
+  <style>
+    body {
+      background:#000;
+      color:#ffd700;
+      font-family: Arial, sans-serif;
+      text-align:center;
+      padding-top:60px;
+      margin:0;
+    }
+    .box {
+      background:#111;
+      padding:40px;
+      border-radius:12px;
+      width:90%;
+      max-width:480px;
+      margin:auto;
+      border:1px solid #ffd700;
+    }
+    input {
+      width:90%;
+      padding:12px;
+      margin-top:12px;
+      border-radius:6px;
+      border:1px solid #ffd700;
+      background:#222;
+      color:#ffd700;
+      font-size:16px;
+    }
+    .btn {
+      margin-top:25px;
+      padding:12px 20px;
+      background:#ffd700;
+      color:#000;
+      font-weight:bold;
+      border:none;
+      border-radius:6px;
+      cursor:pointer;
+      font-size:18px;
+      text-decoration:none;
+      display:inline-block;
+    }
+    .btn:hover {
+      background:#e6c200;
+    }
+    p {
+      color:#fff;
+      margin-top:12px;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="box">
+    <h1>Create Account</h1>
+
+    <input id="email" type="email" placeholder="Email" />
+    <input id="password" type="password" placeholder="Password" />
+
+    <button class="btn" onclick="createAccount()">Create Account</button>
+
+    <p id="msg"></p>
+  </div>
+
+  <script>
+    const client = supabase.createClient(
+      "https://xqtegtfaowplgyanpjsa.supabase.co",
+      "sb_publishable_mBzrAtBTUaUBcXsGpGzB9Q_93NnWOZG"
+    );
+
+    async function createAccount() {
+      const msg = document.getElementById("msg");
+      msg.textContent = "";
+
+      const email = document.getElementById("email").value.trim();
+      const password = document.getElementById("password").value.trim();
+
+      if (!email || !password) {
+        msg.textContent = "Enter email and password.";
+        return;
+      }
+
+      // 1. Create Supabase Auth user
+      const { data: authData, error: authError } = await client.auth.signUp({
+        email,
+        password
+      });
+
+      if (authError) {
+        msg.textContent = authError.message;
+        return;
+      }
+
+      // 2. Insert into UsersSQL
+      await client.from("UsersSQL").insert({
+        email: email,
+        referralcode: Math.random().toString(36).substring(2, 10).toUpperCase()
+      });
+
+      msg.textContent = "Account created! Check your email to confirm.";
+    }
+  </script>
+</body>
+</html>
