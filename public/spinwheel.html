@@ -317,7 +317,7 @@ function updateResultsDisplay() {
     results.join("   ");
 }
 
-/* SEND BINGO + TOKEN TO BACKEND */
+/* ⭐ SEND BINGO TO BACKEND */
 async function sendBingoToBackend(bingoCode) {
   const wallet = localStorage.getItem("crypto_wallet_id") || null;
 
@@ -328,18 +328,28 @@ async function sendBingoToBackend(bingoCode) {
       body: JSON.stringify({
         wallet,
         bingo: bingoCode,
-        spinpooltoken: 1250,
-        spinnumber: 1
+        spinpooltoken: 1250
       })
     });
 
     const data = await res.json();
 
-    if (data && data.newSpinpooltoken) {
+    if (data && data.newSpinpooltoken !== undefined) {
+
+      // 1. FRONTEND RESET: add +1250
+      const refreshedPool = Number(data.newSpinpooltoken) + 1250;
+
+      // 2. Save locally
+      localStorage.setItem("spinpooltokenValue", refreshedPool.toFixed(4));
+
+      // 3. Display
       document.getElementById("spinpooltoken").textContent =
-        data.newSpinpooltoken.toFixed(4);
-      localStorage.setItem("spinpooltokenValue", data.newSpinpooltoken.toFixed(4));
+        refreshedPool.toFixed(4);
+
+      console.log("Backend spinpooltoken:", data.newSpinpooltoken);
+      console.log("Frontend refreshed spinpooltoken:", refreshedPool);
     }
+
   } catch (e) {
     console.error("Spin backend error:", e);
   }
@@ -350,8 +360,6 @@ async function runSpinWheel() {
   if (spinning) return;
   spinning = true;
   pauseTimer = true;
-
-  window.spinStartedAt = Date.now();  // mark spin start time
 
   results = [];
   updateResultsDisplay();
@@ -369,14 +377,12 @@ async function runSpinWheel() {
   document.getElementById("bingo-display").textContent =
     "BINGO: " + bingoCode;
 
-  // save date + token locally
+  // save date locally
   const spinDate = new Date().toString();
   localStorage.setItem("lastSpinDate", spinDate);
-  localStorage.setItem("spinpooltokenValue", "1250");
   document.getElementById("bingo-date").textContent = "Date: " + spinDate;
-  document.getElementById("spinpooltoken").textContent = "1250";
 
-  // send to backend for BingoSQL + TokenSQL updates
+  // send to backend
   await sendBingoToBackend(results);
 
   spinning = false;
@@ -401,13 +407,11 @@ function updateTimer() {
   document.getElementById("timer").textContent =
     `${minutes}m ${seconds}s`;
 
-  /* Hide Date + Token ONLY when 20 minutes before next spin */
   if (diff <= 20 * 60 * 1000) {
     document.getElementById("bingo-date").textContent = "Date:";
     document.getElementById("spinpooltoken").textContent = "--";
   }
 
-  /* Timer hits zero → start spin */
   if (diff <= 1000) {
     runSpinWheel();
     window.testTargetTime = new Date(new Date().getTime() + (30 * 60 * 1000));
@@ -420,3 +424,4 @@ updateTimer();
 
 </body>
 </html>
+
