@@ -189,14 +189,8 @@ let results = [];
 let spinning = false;
 let pauseTimer = false;
 
-/* RESTORE DATE + TOKEN ON REFRESH */
-const savedDate = localStorage.getItem("lastSpinDate");
+/* RESTORE TOKEN ON REFRESH */
 const savedToken = localStorage.getItem("spinpooltokenValue");
-
-if (savedDate) {
-  document.getElementById("bingo-date").textContent = "Date: " + savedDate;
-}
-
 if (savedToken) {
   document.getElementById("spinpooltoken").textContent = savedToken;
 }
@@ -266,7 +260,7 @@ function flashSlice(index) {
   }, 100);
 }
 
-/* SPIN ONE — chooses the target slice */
+/* SPIN ONE */
 function spinOne() {
   if (spinPool.length === 0) spinPool = [...wheelSlots];
   const index = Math.floor(Math.random() * spinPool.length);
@@ -275,7 +269,7 @@ function spinOne() {
   return value;
 }
 
-/* ⭐ ANIMATE SPIN — 3 seconds, 3 full rotations, land on target */
+/* ANIMATE SPIN */
 function animateSpin(targetValue) {
   return new Promise(resolve => {
 
@@ -317,16 +311,14 @@ function updateResultsDisplay() {
     results.join("   ");
 }
 
-/* ⭐ SEND BINGO TO BACKEND */
+/* SEND BINGO TO BACKEND */
 async function sendBingoToBackend(bingoCode) {
-  const wallet = localStorage.getItem("crypto_wallet_id") || null;
 
   try {
     const res = await fetch("/api/spin", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        wallet,
         bingo: bingoCode,
         spinpooltoken: 1250
       })
@@ -336,18 +328,12 @@ async function sendBingoToBackend(bingoCode) {
 
     if (data && data.newSpinpooltoken !== undefined) {
 
-      // 1. FRONTEND RESET: add +1250
       const refreshedPool = Number(data.newSpinpooltoken) + 1250;
 
-      // 2. Save locally
       localStorage.setItem("spinpooltokenValue", refreshedPool.toFixed(4));
 
-      // 3. Display
       document.getElementById("spinpooltoken").textContent =
         refreshedPool.toFixed(4);
-
-      console.log("Backend spinpooltoken:", data.newSpinpooltoken);
-      console.log("Frontend refreshed spinpooltoken:", refreshedPool);
     }
 
   } catch (e) {
@@ -355,7 +341,7 @@ async function sendBingoToBackend(bingoCode) {
   }
 }
 
-/* ⭐ RUN 6 SPINS */
+/* RUN 6 SPINS */
 async function runSpinWheel() {
   if (spinning) return;
   spinning = true;
@@ -377,19 +363,17 @@ async function runSpinWheel() {
   document.getElementById("bingo-display").textContent =
     "BINGO: " + bingoCode;
 
-  // save date locally
   const spinDate = new Date().toString();
   localStorage.setItem("lastSpinDate", spinDate);
   document.getElementById("bingo-date").textContent = "Date: " + spinDate;
 
-  // send to backend
   await sendBingoToBackend(results);
 
   spinning = false;
   pauseTimer = false;
 }
 
-/* ⭐ TIMER */
+/* TIMER */
 function updateTimer() {
   if (pauseTimer) return;
 
@@ -407,11 +391,6 @@ function updateTimer() {
   document.getElementById("timer").textContent =
     `${minutes}m ${seconds}s`;
 
-  if (diff <= 20 * 60 * 1000) {
-    document.getElementById("bingo-date").textContent = "Date:";
-    document.getElementById("spinpooltoken").textContent = "--";
-  }
-
   if (diff <= 1000) {
     runSpinWheel();
     window.testTargetTime = new Date(new Date().getTime() + (30 * 60 * 1000));
@@ -424,4 +403,5 @@ updateTimer();
 
 </body>
 </html>
+
 
