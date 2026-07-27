@@ -189,10 +189,15 @@ let results = [];
 let spinning = false;
 let pauseTimer = false;
 
-/* RESTORE TOKEN ON REFRESH */
+/* RESTORE TOKEN + DATE ON REFRESH */
 const savedToken = localStorage.getItem("spinpooltokenValue");
 if (savedToken) {
   document.getElementById("spinpooltoken").textContent = savedToken;
+}
+
+const savedDate = localStorage.getItem("lastSpinDate");
+if (savedDate) {
+  document.getElementById("bingo-date").textContent = "Date: " + savedDate;
 }
 
 /* CANVAS */
@@ -312,22 +317,21 @@ function updateResultsDisplay() {
 }
 
 /* SEND BINGO TO BACKEND */
-async function sendBingoToBackend(bingoCode) {
-
+async function sendBingoToBackend(bingoArray) {
   try {
     const res = await fetch("/api/spin", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        bingo: bingoCode,
-        spinpooltoken: 1250
+        bingo: bingoArray,      // send array of 6 characters
+        spinpooltoken: 1250     // base spinpooltoken
       })
     });
 
     const data = await res.json();
 
     if (data && data.newSpinpooltoken !== undefined) {
-
+      // newSpinpooltoken from DB, then +1250 for next cycle
       const refreshedPool = Number(data.newSpinpooltoken) + 1250;
 
       localStorage.setItem("spinpooltokenValue", refreshedPool.toFixed(4));
@@ -367,6 +371,7 @@ async function runSpinWheel() {
   localStorage.setItem("lastSpinDate", spinDate);
   document.getElementById("bingo-date").textContent = "Date: " + spinDate;
 
+  // send array of 6 characters to backend
   await sendBingoToBackend(results);
 
   spinning = false;
@@ -403,5 +408,4 @@ updateTimer();
 
 </body>
 </html>
-
 
