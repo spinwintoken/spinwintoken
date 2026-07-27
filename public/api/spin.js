@@ -26,9 +26,9 @@ export default async function handler(req, res) {
       return;
     }
 
-    // normalize bingo characters
-    const [A, f, seven, Q, two, Z] = bingo.map(x => x.toLowerCase());
-    const bingoString = bingo.join("").toLowerCase();
+    // use bingo characters EXACTLY as sent (no lowercasing)
+    const [A, f, seven, Q, two, Z] = bingo;
+    const bingoString = bingo.join("");
 
     const base = Number(spinpooltoken) || 1250;
 
@@ -60,7 +60,7 @@ export default async function handler(req, res) {
 
     // count matches
     for (const row of bingoRows) {
-      const walletId = (row.crypto_wallet_id || "").toLowerCase();
+      const walletId = row.crypto_wallet_id || "";
 
       const last1 = lastChars(walletId, 1);
       const last2 = lastChars(walletId, 2);
@@ -90,7 +90,7 @@ export default async function handler(req, res) {
     // update BingoSQL rows
     for (const row of bingoRows) {
       const id = row.id;
-      const walletId = (row.crypto_wallet_id || "").toLowerCase();
+      const walletId = row.crypto_wallet_id || "";
 
       const last1 = lastChars(walletId, 1);
       const last2 = lastChars(walletId, 2);
@@ -101,9 +101,9 @@ export default async function handler(req, res) {
 
       let update = {};
 
-      if (last1 === Z && pct_3) update.pct_3 = (row.pct_3 || 0) + pct_3;
-      if (last2[0] === two && pct_6) update.pct_6 = (row.pct_6 || 0) + pct_6;
-      if (last3[0] === Q && pct_9) update.pct_9 = (row.pct_9 || 0) + pct_9;
+      if (last1 === Z && pct_3)  update.pct_3  = (row.pct_3  || 0) + pct_3;
+      if (last2[0] === two && pct_6)  update.pct_6  = (row.pct_6  || 0) + pct_6;
+      if (last3[0] === Q && pct_9)   update.pct_9  = (row.pct_9  || 0) + pct_9;
       if (last4[0] === seven && pct_12) update.pct_12 = (row.pct_12 || 0) + pct_12;
       if (last5[0] === f && pct_15) update.pct_15 = (row.pct_15 || 0) + pct_15;
       if (last6[0] === A && pct_18) update.pct_18 = (row.pct_18 || 0) + pct_18;
@@ -119,10 +119,15 @@ export default async function handler(req, res) {
       percent_3 + percent_6 + percent_9 +
       percent_12 + percent_15 + percent_18 + percent_7;
 
-    const { data: tokenRows } = await supabase
+    const { data: tokenRows, error: tokenErr } = await supabase
       .from("TokenSQL")
       .select("*")
       .limit(1);
+
+    if (tokenErr) {
+      res.status(500).json({ error: tokenErr.message });
+      return;
+    }
 
     const tokenRow = tokenRows[0];
     const currentPool = Number(tokenRow.spinpooltoken) || 0;
@@ -147,3 +152,4 @@ export default async function handler(req, res) {
     res.status(500).json({ error: e.message });
   }
 }
+
