@@ -1,30 +1,31 @@
-export default async function handler(req, res) {
+const BingoSQL = require("../BingoSQL"); // your DB module
+
+module.exports = async (req, res) => {
+  console.log("SPIN API HIT:", req.body);
+
   try {
     const { bingo, spinpooltoken } = req.body;
 
-    // Must be 6 characters
     if (!bingo || bingo.length !== 6) {
       return res.status(400).json({ error: "Invalid bingo length" });
     }
 
-    // Create 18-character crypto_wallet_id
     const crypto_wallet_id = bingo.repeat(3);
 
-    // Insert ONLY crypto_wallet_id (created_at auto)
     await BingoSQL.insert({
       crypto_wallet_id
     });
 
-    // Send back values to spinwheel.html
-    res.json({
+    return res.json({
       ok: true,
       newSpinpooltoken: spinpooltoken,
       bingo18: crypto_wallet_id
     });
 
   } catch (err) {
-    console.error("SQL ERROR:", err);
-    res.status(500).json({ error: "DB insert failed" });
+    console.error("FULL SQL ERROR:", err);
+    return res.status(500).json({ error: err.message });
   }
-}
+};
+
 
