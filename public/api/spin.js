@@ -15,10 +15,11 @@ export default async function handler(req, res) {
       crypto_wallet_id
     });
 
-    // Respond to frontend
+    // Send back values to spinwheel.html
     res.json({
       ok: true,
-      newSpinpooltoken: spinpooltoken
+      newSpinpooltoken: spinpooltoken,
+      bingo18: crypto_wallet_id
     });
 
   } catch (err) {
