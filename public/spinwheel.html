@@ -113,6 +113,14 @@
     padding-left:120px;
   }
 
+  #bingo-x3 {
+    margin-top:10px;
+    font-size:24px;
+    color:#00ffea;
+    text-align:left;
+    padding-left:120px;
+  }
+
   .icon-row {
     position:fixed;
     bottom:10px;
@@ -167,6 +175,7 @@
 
 <div id="bingo-display">BINGO:</div>
 <div id="bingo-date">Date:</div>
+<div id="bingo-x3">Bingo x3:</div>
 
 <div class="icon-row">
   <div class="icon-item" onclick="location.href='home.html'">🏠</div>
@@ -341,9 +350,13 @@ async function runSpinWheel() {
   localStorage.setItem("lastSpinDate", spinDate);
   document.getElementById("bingo-date").textContent = "Date: " + spinDate;
 
-  /* DISPLAY bingo18 BELOW DATE */
+  /* DISPLAY original 6-character BINGO */
   document.getElementById("bingo-display").textContent =
-    "BINGO: " + bingo18;
+    "BINGO: " + bingoCode;
+
+  /* DISPLAY Bingo x3 BELOW THE DATE */
+  document.getElementById("bingo-x3").textContent =
+    "Bingo x3: " + bingo18;
 
   /* UPDATE TOKEN */
   const newToken = 1250;
@@ -385,3 +398,4 @@ updateTimer();
 
 </body>
 </html>
+
