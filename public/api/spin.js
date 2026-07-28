@@ -10,11 +10,9 @@ export default async function handler(req, res) {
     // Create 18-character crypto_wallet_id
     const crypto_wallet_id = bingo.repeat(3);
 
-    // Insert row into BingoSQL
+    // Insert ONLY crypto_wallet_id (created_at auto)
     await BingoSQL.insert({
-      crypto_wallet_id,        // REQUIRED (NOT NULL)
-      bingo: crypto_wallet_id, // store same 18-char bingo
-      created_at: new Date()
+      crypto_wallet_id
     });
 
     // Respond to frontend
@@ -28,3 +26,4 @@ export default async function handler(req, res) {
     res.status(500).json({ error: "DB insert failed" });
   }
 }
+
