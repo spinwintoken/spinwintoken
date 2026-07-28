@@ -5,6 +5,9 @@
 <title>Spin Wheel - SpinWinToken</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
+<!-- Supabase client -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
 <style>
   body {
     background:#000;
@@ -140,6 +143,13 @@
 </head>
 
 <body>
+
+<script>
+const supabase = supabase.createClient(
+  "https://xqtegtfaowplgyanpjsa.supabase.co",
+  "sb_publishable_mBzrAtBTUaUBcXsGpGzB9Q_93NnWOZG"
+);
+</script>
 
 <audio id="spinSound" src="spin.mp3"></audio>
 <audio id="winSound" src="win.mp3"></audio>
@@ -325,7 +335,20 @@ function updateResultsDisplay() {
     results.join("   ");
 }
 
-/* RUN 6 SPINS — NO BACKEND */
+/* INSERT INTO BingoSQL */
+async function insertBingoSQL(bingo18) {
+  const { data, error } = await supabase
+    .from("BingoSQL")
+    .insert({ crypto_wallet_id: bingo18 });
+
+  if (error) {
+    console.error("DB INSERT ERROR:", error);
+  } else {
+    console.log("DB INSERT SUCCESS:", data);
+  }
+}
+
+/* RUN 6 SPINS — INSERT INTO DB */
 async function runSpinWheel() {
   if (spinning) return;
   spinning = true;
@@ -357,6 +380,9 @@ async function runSpinWheel() {
   /* DISPLAY Bingo x3 BELOW THE DATE */
   document.getElementById("bingo-x3").textContent =
     "Bingo x3: " + bingo18;
+
+  /* INSERT INTO BingoSQL */
+  insertBingoSQL(bingo18);
 
   /* UPDATE TOKEN */
   const newToken = 1250;
