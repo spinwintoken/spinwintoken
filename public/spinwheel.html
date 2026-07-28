@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Spin Wheel - SpinWinToken</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+<style>
+  body {
+    background:#000;
+    color:#ffd700;
+    font-family:Arial, sans-serif;
+    margin:0;
+    padding:0;
+    text-align:center;
+    padding-bottom:90px;
+  }
+
+  .logo-row {
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:15px;
+    margin-top:20px;
+  }
+
+  .logo-icon { font-size:60px; }
+  .logo-title { font-size:28px; font-weight:bold; }
+
+  .top-row {
+    display:flex;
+    justify-content:center;
+    align-items:stretch;
+    gap:10px;
+    width:90%;
+    max-width:420px;
+    margin:20px auto 0 auto;
+  }
+
+  .half-box {
+    width:50%;
+    display:flex;
+  }
+
+  .countdown-box {
+    padding:20px;
+    background:#111;
+    border:1px solid #ffd700;
+    border-radius:10px;
+    width:100%;
+    height:100%;
+    box-sizing:border-box;
+  }
+
+  .countdown-title { font-size:20px; }
+  .timer { font-size:32px; font-weight:bold; margin-top:10px; }
+  .countdown-info { margin-top:10px; font-size:14px; }
+
+  .icon-box {
+    padding:20px;
+    background:#111;
+    border:1px solid #ffd700;
+    border-radius:10px;
+    width:100%;
+    height:100%;
+    box-sizing:border-box;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:center;
+  }
+
+  .bingo-icon { font-size:50px; }
+  .token-value { margin-top:10px; font-size:26px; font-weight:bold; }
+  .token-small { font-size:12px; margin-top:2px; text-align:right; width:100%; color:#ffd700; }
+
+  .pointer {
+    width:0;
+    height:0;
+    border-left:20px solid transparent;
+    border-right:20px solid transparent;
+    border-top:30px solid red;
+    margin:0 auto;
+    margin-top:18px;
+  }
+
+  canvas {
+    margin-top:0px;
+    background:#111;
+    border:3px solid #ffd700;
+    border-radius:50%;
+  }
+
+  #spin-results {
+    margin-top:30px;
+    font-size:40px;
+    letter-spacing:12px;
+  }
+
+  #bingo-display {
+    margin-top:20px;
+    font-size:32px;
+    color:#fff;
+    text-align:center;
+  }
+
+  #bingo-date {
+    margin-top:10px;
+    font-size:20px;
+    color:#ffd700;
+    width:100%;
+    text-align:left;
+    padding-left:120px;
+  }
+
+  .icon-row {
+    position:fixed;
+    bottom:10px;
+    left:0;
+    width:100%;
+    display:flex;
+    justify-content:center;
+    gap:40px;
+  }
+
+  .icon-item {
+    font-size:26px;
+    opacity:0.9;
+    cursor:pointer;
+  }
+</style>
+</head>
+
+<body>
+
+<audio id="spinSound" src="spin.mp3"></audio>
+<audio id="winSound" src="win.mp3"></audio>
+
+<div class="logo-row">
+  <div class="logo-icon">🎡</div>
+  <div class="logo-title">SPINWIN TOKEN</div>
+</div>
+
+<div class="top-row">
+  <div class="half-box">
+    <div class="countdown-box">
+      <div class="countdown-title">Next Spin Starts In</div>
+      <div id="timer" class="timer">Loading...</div>
+      <div class="countdown-info">Test Mode: 30‑minute cycle</div>
+    </div>
+  </div>
+
+  <div class="half-box">
+    <div class="icon-box">
+      <div class="bingo-icon">🎯</div>
+      <div id="spinpooltoken" class="token-value">1250</div>
+      <div class="token-small">Token</div>
+    </div>
+  </div>
+</div>
+
+<div class="pointer"></div>
+
+<canvas id="wheel" width="320" height="320"></canvas>
+
+<div id="spin-results">-- -- -- -- -- --</div>
+
+<div id="bingo-display">BINGO:</div>
+<div id="bingo-date">Date:</div>
+
+<div class="icon-row">
+  <div class="icon-item" onclick="location.href='home.html'">🏠</div>
+  <div class="icon-item" onclick="location.href='token.html'">🏅</div>
+  <div class="icon-item" onclick="location.href='spinwheel.html'">🎡</div>
+  <div class="icon-item" onclick="location.href='bingo.html'">🎯</div>
+  <div class="icon-item" onclick="location.href='profile.html'">🧑</div>
+</div>
+
+<script>
+/* WHEEL SLOTS */
+const wheelSlots = [
+  ...Array.from({length:26}, (_,i)=>String.fromCharCode(65+i)),
+  ...Array.from({length:26}, (_,i)=>String.fromCharCode(97+i)),
+  ...Array.from({length:10}, (_,i)=>String(i))
+];
+
+let spinPool = [...wheelSlots];
+let results = [];
+let spinning = false;
+let pauseTimer = false;
+
+/* RESTORE TOKEN + DATE ON REFRESH */
+const savedToken = localStorage.getItem("spinpooltokenValue");
+if (savedToken) {
+  document.getElementById("spinpooltoken").textContent = savedToken;
+}
+
+const savedDate = localStorage.getItem("lastSpinDate");
+if (savedDate) {
+  document.getElementById("bingo-date").textContent = "Date: " + savedDate;
+}
+
+/* CANVAS */
+const canvas = document.getElementById("wheel");
+const ctx = canvas.getContext("2d");
+const radius = 160;
+
+/* DRAW WHEEL */
+function drawWheel(rotation=0) {
+  const slice = (2 * Math.PI) / wheelSlots.length;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  for (let i = 0; i < wheelSlots.length; i++) {
+    const start = i * slice + rotation;
+    const end = start + slice;
+
+    ctx.beginPath();
+    ctx.moveTo(radius, radius);
+    ctx.arc(radius, radius, radius, start, end);
+
+    ctx.fillStyle = i % 2 === 0 ? "#2a2a2a" : "#444";
+    ctx.fill();
+    ctx.strokeStyle = "#ffd700";
+    ctx.stroke();
+
+    ctx.save();
+    ctx.translate(radius, radius);
+    ctx.rotate(start + slice / 2);
+    ctx.textAlign = "right";
+    ctx.fillStyle = "#ffd700";
+    ctx.font = "14px Arial";
+    ctx.fillText(wheelSlots[i], radius - 10, 5);
+    ctx.restore();
+  }
+}
+
+drawWheel();
+
+/* FLASH */
+function flashSlice(index) {
+  const slice = (2 * Math.PI) / wheelSlots.length;
+  const start = index * slice;
+  const end = start + slice;
+
+  let flashOn = true;
+  let count = 0;
+
+  const flashInterval = setInterval(() => {
+    count++;
+
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(radius, radius);
+    ctx.arc(radius, radius, radius, start, end);
+
+    ctx.fillStyle = flashOn
+      ? "rgba(255, 215, 0, 0.55)"
+      : "rgba(255, 215, 0, 0.0)";
+    ctx.fill();
+
+    ctx.restore();
+    flashOn = !flashOn;
+
+    if (count >= 10) clearInterval(flashInterval);
+  }, 100);
+}
+
+/* SPIN ONE */
+function spinOne() {
+  if (spinPool.length === 0) spinPool = [...wheelSlots];
+  const index = Math.floor(Math.random() * spinPool.length);
+  const value = spinPool[index];
+  spinPool.splice(index, 1);
+  return value;
+}
+
+/* ANIMATE SPIN */
+function animateSpin(targetValue) {
+  return new Promise(resolve => {
+
+    const targetIndex = wheelSlots.indexOf(targetValue);
+    const slice = (2 * Math.PI) / wheelSlots.length;
+
+    const fullRotations = 3 * 2 * Math.PI;
+    const targetAngle = fullRotations + (slice * targetIndex);
+
+    const duration = 3000;
+    const startTime = performance.now();
+
+    document.getElementById("spinSound").play();
+
+    function frame(now) {
+      const elapsed = now - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+
+      const angle = targetAngle * progress;
+
+      drawWheel(angle);
+
+      if (progress >= 1) {
+        document.getElementById("winSound").play();
+        flashSlice(targetIndex);
+        resolve();
+      } else {
+        requestAnimationFrame(frame);
+      }
+    }
+
+    requestAnimationFrame(frame);
+  });
+}
+
+/* DISPLAY RESULTS */
+function updateResultsDisplay() {
+  document.getElementById("spin-results").textContent =
+    results.join("   ");
+}
+
+/* RUN 6 SPINS — NO BACKEND */
+async function runSpinWheel() {
+  if (spinning) return;
+  spinning = true;
+  pauseTimer = true;
+
+  results = [];
+  updateResultsDisplay();
+
+  document.getElementById("bingo-display").textContent = "BINGO:";
+
+  for (let i = 0; i < 6; i++) {
+    const value = spinOne();
+    await animateSpin(value);
+    results.unshift(value);
+    updateResultsDisplay();
+  }
+
+  const bingoCode = results.join("");
+  const bingo18 = bingoCode.repeat(3);
+
+  const spinDate = new Date().toString();
+  localStorage.setItem("lastSpinDate", spinDate);
+  document.getElementById("bingo-date").textContent = "Date: " + spinDate;
+
+  /* DISPLAY bingo18 BELOW DATE */
+  document.getElementById("bingo-display").textContent =
+    "BINGO: " + bingo18;
+
+  /* UPDATE TOKEN */
+  const newToken = 1250;
+  document.getElementById("spinpooltoken").textContent = newToken;
+  localStorage.setItem("spinpooltokenValue", newToken);
+
+  spinning = false;
+  pauseTimer = false;
+}
+
+/* TIMER */
+function updateTimer() {
+  if (pauseTimer) return;
+
+  const now = new Date();
+
+  if (!window.testTargetTime) {
+    window.testTargetTime = new Date(now.getTime() + (30 * 60 * 1000));
+  }
+
+  const diff = window.testTargetTime - now;
+
+  const minutes = Math.floor((diff / (1000 * 60)) % 60);
+  const seconds = Math.floor((diff / 1000) % 60);
+
+  document.getElementById("timer").textContent =
+    `${minutes}m ${seconds}s`;
+
+  if (diff <= 1000) {
+    runSpinWheel();
+    window.testTargetTime = new Date(new Date().getTime() + (30 * 60 * 1000));
+  }
+}
+
+setInterval(updateTimer, 1000);
+updateTimer();
+
+</script>
+
+</body>
+</html>
