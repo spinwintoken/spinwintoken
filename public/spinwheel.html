@@ -254,14 +254,14 @@ function drawWheel(rotation=0) {
 
 drawWheel();
 
-/* READ BingoSQL USING FIRST BINGO CHARACTER */
-async function displayBingoSQL(firstChar) {
+/* READ BingoSQL USING BINGO FIRST CHARACTER */
+async function displayBingoSQL(matchChar) {
 
   const { data: rows, error } = await supabaseClient
     .from("BingoSQL")
     .select("crypto_wallet_id");
 
-  let output = "<strong>First Bingo Character:</strong> " + firstChar + "<br><br>";
+  let output = "<strong>Bingo match character:</strong> " + matchChar + "<br><br>";
 
   if (error) {
     output += "ERROR reading BingoSQL.<br>";
@@ -275,99 +275,23 @@ async function displayBingoSQL(firstChar) {
     return;
   }
 
-  const leftMatches = rows.filter(r => r.crypto_wallet_id[0] === firstChar)
+  const leftMatches = rows.filter(r => r.crypto_wallet_id[0] === matchChar)
                           .map(r => r.crypto_wallet_id);
 
   const rightMatches = rows.filter(r => {
     const last = r.crypto_wallet_id[r.crypto_wallet_id.length - 1];
-    return last === firstChar;
+    return last === matchChar;
   }).map(r => r.crypto_wallet_id);
 
-  output += "<strong>Left match (" + firstChar + "):</strong><br>";
+  output += "<strong>First char on the left = " + matchChar + ":</strong><br>";
   output += leftMatches.length ? leftMatches.join("<br>") : "none";
   output += "<br><br>";
 
-  output += "<strong>Right match (" + firstChar + "):</strong><br>";
+  output += "<strong>Last char on the right = " + matchChar + ":</strong><br>";
   output += rightMatches.length ? rightMatches.join("<br>") : "none";
   output += "<br>";
 
   document.getElementById("bingoSQL_display").innerHTML = output;
-}
-
-function flashSlice(index) {
-  const slice = (2 * Math.PI) / wheelSlots.length;
-  const start = index * slice;
-  const end = start + slice;
-
-  let flashOn = true;
-  let count = 0;
-
-  const flashInterval = setInterval(() => {
-    count++;
-
-    ctx.save();
-    ctx.beginPath();
-    ctx.moveTo(radius, radius);
-    ctx.arc(radius, radius, radius, start, end);
-
-    ctx.fillStyle = flashOn
-      ? "rgba(255, 215, 0, 0.55)"
-      : "rgba(255, 215, 0, 0.0)";
-    ctx.fill();
-
-    ctx.restore();
-    flashOn = !flashOn;
-
-    if (count >= 10) clearInterval(flashInterval);
-  }, 100);
-}
-
-function spinOne() {
-  if (spinPool.length === 0) spinPool = [...wheelSlots];
-  const index = Math.floor(Math.random() * spinPool.length);
-  const value = spinPool[index];
-  spinPool.splice(index, 1);
-  return value;
-}
-
-function animateSpin(targetValue) {
-  return new Promise(resolve => {
-
-    const targetIndex = wheelSlots.indexOf(targetValue);
-    const slice = (2 * Math.PI) / wheelSlots.length;
-
-    const fullRotations = 3 * 2 * Math.PI;
-    const targetAngle = fullRotations + (slice * targetIndex);
-
-    const duration = 3000;
-    const startTime = performance.now();
-
-    try { document.getElementById("spinSound").play().catch(()=>{}); } catch(e){}
-
-    function frame(now) {
-      const elapsed = now - startTime;
-      const progress = Math.min(elapsed / duration, 1);
-
-      const angle = targetAngle * progress;
-
-      drawWheel(angle);
-
-      if (progress >= 1) {
-        try { document.getElementById("winSound").play().catch(()=>{}); } catch(e){}
-        flashSlice(targetIndex);
-        resolve();
-      } else {
-        requestAnimationFrame(frame);
-      }
-    }
-
-    requestAnimationFrame(frame);
-  });
-}
-
-function updateResultsDisplay() {
-  document.getElementById("spin-results").textContent =
-    results.join("   ");
 }
 
 /* RUN 6 SPINS */
@@ -389,7 +313,7 @@ async function runSpinWheel() {
   }
 
   const bingoCode = results.join("");
-  const firstChar = bingoCode[0];
+  const matchChar = bingoCode[0];  // FIRST character
 
   const spinDate = new Date().toString();
   localStorage.setItem("lastSpinDate", spinDate);
@@ -398,7 +322,7 @@ async function runSpinWheel() {
   document.getElementById("bingo-display").textContent =
     "BINGO: " + bingoCode;
 
-  await displayBingoSQL(firstChar);
+  await displayBingoSQL(matchChar);
 
   spinning = false;
   pauseTimer = false;
@@ -434,6 +358,7 @@ updateTimer();
 
 </body>
 </html>
+
 
 
 
