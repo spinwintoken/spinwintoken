@@ -115,7 +115,7 @@
     padding-left:120px;
   }
 
-  /* NEW display area */
+  /* display area below Date */
   #bingoSQL_display {
     font-size:18px;
     color:#00ffea;
@@ -189,7 +189,6 @@ const supabaseClient = createClient(
 <div id="bingo-display">BINGO:</div>
 <div id="bingo-date">Date:</div>
 
-<!-- NEW display area -->
 <div id="bingoSQL_display"></div>
 
 <div class="icon-row">
@@ -255,47 +254,6 @@ function drawWheel(rotation=0) {
 }
 
 drawWheel();
-
-/* READ BingoSQL AND DISPLAY FIRST POSITION (V) */
-async function displayBingoSQL() {
-
-  const { data: rows, error } = await supabaseClient
-    .from("BingoSQL")
-    .select("crypto_wallet_id");
-
-  let output = "<strong>1st Position (V):</strong><br><br>";
-
-  if (error) {
-    output += "ERROR reading table.<br>";
-    document.getElementById("bingoSQL_display").innerHTML = output;
-    return;
-  }
-
-  if (!rows || rows.length === 0) {
-    output += "NO DATA FOUND in BingoSQL.<br>";
-    document.getElementById("bingoSQL_display").innerHTML = output;
-    return;
-  }
-
-  /* LEFT V */
-  const leftMatches = rows.filter(r => r.crypto_wallet_id[0] === "V")
-                          .map(r => r.crypto_wallet_id);
-
-  /* RIGHT V */
-  const rightMatches = rows.filter(r => {
-    const lastChar = r.crypto_wallet_id[r.crypto_wallet_id.length - 1];
-    return lastChar === "V";
-  }).map(r => r.crypto_wallet_id);
-
-  /* TOTAL */
-  const total = leftMatches.length + rightMatches.length;
-
-  output += "Left V: " + (leftMatches.length ? leftMatches.join(", ") : "none") + "<br>";
-  output += "Right V: " + (rightMatches.length ? rightMatches.join(", ") : "none") + "<br>";
-  output += "Total V: " + total + "<br>";
-
-  document.getElementById("bingoSQL_display").innerHTML = output;
-}
 
 function flashSlice(index) {
   const slice = (2 * Math.PI) / wheelSlots.length;
@@ -373,6 +331,50 @@ function updateResultsDisplay() {
     results.join("   ");
 }
 
+/* READ BingoSQL USING DYNAMIC BINGO FIRST + LAST CHAR */
+async function displayBingoSQL(bingoCode) {
+  const firstChar = bingoCode[0];
+  const lastChar = bingoCode[bingoCode.length - 1];
+
+  const { data: rows, error } = await supabaseClient
+    .from("BingoSQL")
+    .select("crypto_wallet_id");
+
+  let output = "<strong>Bingo 6:</strong> " + bingoCode + "<br>";
+  output += "<strong>First char:</strong> " + firstChar + "<br>";
+  output += "<strong>Last char:</strong> " + lastChar + "<br><br>";
+
+  if (error) {
+    output += "ERROR reading BingoSQL.<br>";
+    document.getElementById("bingoSQL_display").innerHTML = output;
+    return;
+  }
+
+  if (!rows || rows.length === 0) {
+    output += "NO DATA FOUND in BingoSQL.<br>";
+    document.getElementById("bingoSQL_display").innerHTML = output;
+    return;
+  }
+
+  const leftMatches = rows.filter(r => r.crypto_wallet_id[0] === firstChar)
+                          .map(r => r.crypto_wallet_id);
+
+  const rightMatches = rows.filter(r => {
+    const last = r.crypto_wallet_id[r.crypto_wallet_id.length - 1];
+    return last === lastChar;
+  }).map(r => r.crypto_wallet_id);
+
+  output += "<strong>Left match (" + firstChar + "):</strong><br>";
+  output += leftMatches.length ? leftMatches.join("<br>") : "none";
+  output += "<br><br>";
+
+  output += "<strong>Right match (" + lastChar + "):</strong><br>";
+  output += rightMatches.length ? rightMatches.join("<br>") : "none";
+  output += "<br>";
+
+  document.getElementById("bingoSQL_display").innerHTML = output;
+}
+
 /* RUN 6 SPINS */
 async function runSpinWheel() {
   if (spinning) return;
@@ -400,8 +402,8 @@ async function runSpinWheel() {
   document.getElementById("bingo-display").textContent =
     "BINGO: " + bingoCode;
 
-  /* SHOW FIRST POSITION MATCHES */
-  await displayBingoSQL();
+  /* display wallets matching first + last bingo characters */
+  await displayBingoSQL(bingoCode);
 
   spinning = false;
   pauseTimer = false;
