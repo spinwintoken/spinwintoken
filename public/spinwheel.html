@@ -5,7 +5,6 @@
 <title>Spin Wheel - SpinWinToken</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-<!-- Supabase client -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
@@ -137,7 +136,6 @@
 <body>
 
 <script>
-/* FIXED SUPABASE v2 CLIENT */
 const { createClient } = supabase;
 
 const supabaseClient = createClient(
@@ -146,7 +144,6 @@ const supabaseClient = createClient(
 );
 </script>
 
-<!-- SAFE AUDIO -->
 <audio id="spinSound"></audio>
 <audio id="winSound"></audio>
 
@@ -191,7 +188,6 @@ const supabaseClient = createClient(
 </div>
 
 <script>
-/* WHEEL SLOTS */
 const wheelSlots = [
   ...Array.from({length:26}, (_,i)=>String.fromCharCode(65+i)),
   ...Array.from({length:26}, (_,i)=>String.fromCharCode(97+i)),
@@ -203,7 +199,6 @@ let results = [];
 let spinning = false;
 let pauseTimer = false;
 
-/* RESTORE TOKEN + DATE */
 const savedToken = localStorage.getItem("spinpooltokenValue");
 if (savedToken) {
   document.getElementById("spinpooltoken").textContent = savedToken;
@@ -214,12 +209,10 @@ if (savedDate) {
   document.getElementById("bingo-date").textContent = "Date: " + savedDate;
 }
 
-/* CANVAS */
 const canvas = document.getElementById("wheel");
 const ctx = canvas.getContext("2d");
 const radius = 160;
 
-/* DRAW WHEEL */
 function drawWheel(rotation=0) {
   const slice = (2 * Math.PI) / wheelSlots.length;
   ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -250,7 +243,6 @@ function drawWheel(rotation=0) {
 
 drawWheel();
 
-/* FLASH */
 function flashSlice(index) {
   const slice = (2 * Math.PI) / wheelSlots.length;
   const start = index * slice;
@@ -279,7 +271,6 @@ function flashSlice(index) {
   }, 100);
 }
 
-/* SPIN ONE */
 function spinOne() {
   if (spinPool.length === 0) spinPool = [...wheelSlots];
   const index = Math.floor(Math.random() * spinPool.length);
@@ -288,7 +279,6 @@ function spinOne() {
   return value;
 }
 
-/* ANIMATE SPIN */
 function animateSpin(targetValue) {
   return new Promise(resolve => {
 
@@ -324,13 +314,11 @@ function animateSpin(targetValue) {
   });
 }
 
-/* DISPLAY RESULTS */
 function updateResultsDisplay() {
   document.getElementById("spin-results").textContent =
     results.join("   ");
 }
 
-/* RUN 6 SPINS */
 async function runSpinWheel() {
   if (spinning) return;
   spinning = true;
@@ -365,7 +353,6 @@ async function runSpinWheel() {
   pauseTimer = false;
 }
 
-/* TIMER — NOW 5 MINUTES */
 function updateTimer() {
   if (pauseTimer) return;
 
