@@ -115,20 +115,13 @@
     padding-left:120px;
   }
 
-  .group-title {
-    font-size:22px;
-    color:#ffae00;
-    margin-top:15px;
-    text-align:left;
-    padding-left:120px;
-  }
-
-  .group-line {
+  /* NEW display area */
+  #bingoSQL_display {
     font-size:18px;
     color:#00ffea;
     text-align:left;
     padding-left:120px;
-    margin-top:4px;
+    margin-top:15px;
   }
 
   .icon-row {
@@ -195,41 +188,8 @@ const supabaseClient = createClient(
 <div id="bingo-display">BINGO:</div>
 <div id="bingo-date">Date:</div>
 
-<!-- GROUPED DISPLAY BLOCKS -->
-<div id="group1" class="group-title">1st Position (Z)</div>
-<div id="g1_left" class="group-line"></div>
-<div id="g1_right" class="group-line"></div>
-<div id="g1_total" class="group-line"></div>
-
-<div id="group2" class="group-title">2nd Position (2)</div>
-<div id="g2_left" class="group-line"></div>
-<div id="g2_right" class="group-line"></div>
-<div id="g2_total" class="group-line"></div>
-
-<div id="group3" class="group-title">3rd Position (Q)</div>
-<div id="g3_left" class="group-line"></div>
-<div id="g3_right" class="group-line"></div>
-<div id="g3_total" class="group-line"></div>
-
-<div id="group4" class="group-title">4th Position (7)</div>
-<div id="g4_left" class="group-line"></div>
-<div id="g4_right" class="group-line"></div>
-<div id="g4_total" class="group-line"></div>
-
-<div id="group5" class="group-title">5th Position (f)</div>
-<div id="g5_left" class="group-line"></div>
-<div id="g5_right" class="group-line"></div>
-<div id="g5_total" class="group-line"></div>
-
-<div id="group6" class="group-title">6th Position (A)</div>
-<div id="g6_left" class="group-line"></div>
-<div id="g6_right" class="group-line"></div>
-<div id="g6_total" class="group-line"></div>
-
-<div id="group7" class="group-title">7th Position (Af7Q2Z)</div>
-<div id="g7_left" class="group-line"></div>
-<div id="g7_right" class="group-line"></div>
-<div id="g7_total" class="group-line"></div>
+<!-- NEW display area -->
+<div id="bingoSQL_display"></div>
 
 <div class="icon-row">
   <div class="icon-item" onclick="location.href='home.html'">🏠</div>
@@ -372,90 +332,92 @@ function updateResultsDisplay() {
 }
 
 /* --------------------------------------------------
-   GROUPED DISPLAY LOGIC
+   ONLY READ BingoSQL AND DISPLAY crypto_wallet_id
 -------------------------------------------------- */
 
-async function displayGroups() {
+async function displayBingoSQL() {
 
   const { data: rows, error } = await supabaseClient
     .from("BingoSQL")
     .select("crypto_wallet_id");
 
-  if (error) return;
-
-  function leftMatch(rows, index, char) {
-    return rows.filter(r => r.crypto_wallet_id[index] === char)
-               .map(r => r.crypto_wallet_id);
+  if (error) {
+    console.log("READ ERROR:", error);
+    return;
   }
 
-  function rightMatch(rows, index, char) {
-    return rows.filter(r => {
-      const lastChar = r.crypto_wallet_id[r.crypto_wallet_id.length - 1 - index];
-      return lastChar === char;
-    }).map(r => r.crypto_wallet_id);
-  }
+  let output = "<strong>BingoSQL Wallets:</strong><br><br>";
 
-  function fullLeft(rows, target) {
-    return rows.filter(r => r.crypto_wallet_id.startsWith(target))
-               .map(r => r.crypto_wallet_id);
-  }
+  rows.forEach(r => {
+    output += r.crypto_wallet_id + "<br>";
+  });
 
-  function fullRight(rows, target) {
-    return rows.filter(r => r.crypto_wallet_id.endsWith(target))
-               .map(r => r.crypto_wallet_id);
-  }
-
-  /* 1st Position: Z */
-  const g1_left = leftMatch(rows, 0, "Z");
-  const g1_right = rightMatch(rows, 0, "Z");
-  document.getElementById("g1_left").textContent = "Left Z: " + (g1_left.length ? g1_left.join(", ") : "none");
-  document.getElementById("g1_right").textContent = "Right Z: " + (g1_right.length ? g1_right.join(", ") : "none");
-  document.getElementById("g1_total").textContent = "Total Z: " + (g1_left.length + g1_right.length);
-
-  /* 2nd Position: 2 */
-  const g2_left = leftMatch(rows, 1, "2");
-  const g2_right = rightMatch(rows, 1, "2");
-  document.getElementById("g2_left").textContent = "Left 2: " + (g2_left.length ? g2_left.join(", ") : "none");
-  document.getElementById("g2_right").textContent = "Right 2: " + (g2_right.length ? g2_right.join(", ") : "none");
-  document.getElementById("g2_total").textContent = "Total 2: " + (g2_left.length + g2_right.length);
-
-  /* 3rd Position: Q */
-  const g3_left = leftMatch(rows, 2, "Q");
-  const g3_right = rightMatch(rows, 2, "Q");
-  document.getElementById("g3_left").textContent = "Left Q: " + (g3_left.length ? g3_left.join(", ") : "none");
-  document.getElementById("g3_right").textContent = "Right Q: " + (g3_right.length ? g3_right.join(", ") : "none");
-  document.getElementById("g3_total").textContent = "Total Q: " + (g3_left.length + g3_right.length);
-
-  /* 4th Position: 7 */
-  const g4_left = leftMatch(rows, 3, "7");
-  const g4_right = rightMatch(rows, 3, "7");
-  document.getElementById("g4_left").textContent = "Left 7: " + (g4_left.length ? g4_left.join(", ") : "none");
-  document.getElementById("g4_right").textContent = "Right 7: " + (g4_right.length ? g4_right.join(", ") : "none");
-  document.getElementById("g4_total").textContent = "Total 7: " + (g4_left.length + g4_right.length);
-
-  /* 5th Position: f */
-  const g5_left = leftMatch(rows, 4, "f");
-  const g5_right = rightMatch(rows, 4, "f");
-  document.getElementById("g5_left").textContent = "Left f: " + (g5_left.length ? g5_left.join(", ") : "none");
-  document.getElementById("g5_right").textContent = "Right f: " + (g5_right.length ? g5_right.join(", ") : "none");
-  document.getElementById("g5_total").textContent = "Total f: " + (g5_left.length + g5_right.length);
-
-  /* 6th Position: A */
-  const g6_left = leftMatch(rows, 5, "A");
-  const g6_right = rightMatch(rows, 5, "A");
-  document.getElementById("g6_left").textContent = "Left A: " + (g6_left.length ? g6_left.join(", ") : "none");
-  document.getElementById("g6_right").textContent = "Right A: " + (g6_right.length ? g6_right.join(", ") : "none");
-  document.getElementById("g6_total").textContent = "Total A: " + (g6_left.length + g6_right.length);
-
-  /* 7th Position: Af7Q2Z */
-  const target = "Af7Q2Z";
-  const g7_left = fullLeft(rows, target);
-  const g7_right = fullRight(rows, target);
-  document.getElementById("g7_left").textContent = "Left Af7Q2Z: " + (g7_left.length ? g7_left.join(", ") : "none");
-  document.getElementById("g7_right").textContent = "Right Af7Q2Z: " + (g7_right.length ? g7_right.join(", ") : "none");
-  document.getElementById("g7_total").textContent = "Total Af7Q2Z: " + (g7_left.length + g7_right.length);
+  document.getElementById("bingoSQL_display").innerHTML = output;
 }
 
 /* RUN 6 SPINS */
 async function runSpinWheel() {
   if (spinning) return;
+  spinning = true;
+  pauseTimer = true;
+
+  results = [];
+  updateResultsDisplay();
+
+  document.getElementById("bingo-display").textContent = "BINGO:";
+
+  for (let i = 0; i < 6; i++) {
+    const value = spinOne();
+    await animateSpin(value);
+    results.unshift(value);
+    updateResultsDisplay();
+  }
+
+  const bingoCode = results.join("");
+
+  const spinDate = new Date().toString();
+  localStorage.setItem("lastSpinDate", spinDate);
+  document.getElementById("bingo-date").textContent = "Date: " + spinDate;
+
+  document.getElementById("bingo-display").textContent =
+    "BINGO: " + bingoCode;
+
+  /* ONLY display BingoSQL */
+  await displayBingoSQL();
+
+  spinning = false;
+  pauseTimer = false;
+}
+
+function updateTimer() {
+  if (pauseTimer) return;
+
+  const now = new Date();
+
+  if (!window.testTargetTime) {
+    window.testTargetTime = new Date(now.getTime() + (5 * 60 * 1000));
+  }
+
+  const diff = window.testTargetTime - now;
+
+  const minutes = Math.floor((diff / (1000 * 60)) % 60);
+  const seconds = Math.floor((diff / 1000) % 60);
+
+  document.getElementById("timer").textContent =
+    `${minutes}m ${seconds}s`;
+
+  if (diff <= 1000) {
+    runSpinWheel();
+    window.testTargetTime = new Date(new Date().getTime() + (5 * 60 * 1000));
+  }
+}
+
+setInterval(updateTimer, 1000);
+updateTimer();
+
+</script>
+
+</body>
+</html>
+
+
