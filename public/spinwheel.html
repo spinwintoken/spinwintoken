@@ -115,13 +115,6 @@
     padding-left:120px;
   }
 
-  .pct-line {
-    font-size:18px;
-    color:#00ffea;
-    text-align:left;
-    padding-left:120px;
-  }
-
   .icon-row {
     position:fixed;
     bottom:10px;
@@ -186,15 +179,6 @@ const supabaseClient = createClient(
 <div id="bingo-display">BINGO:</div>
 <div id="bingo-date">Date:</div>
 
-<!-- NEW pct displays -->
-<div id="pct_3" class="pct-line">pct_3:</div>
-<div id="pct_6" class="pct-line">pct_6:</div>
-<div id="pct_9" class="pct-line">pct_9:</div>
-<div id="pct_12" class="pct-line">pct_12:</div>
-<div id="pct_15" class="pct-line">pct_15:</div>
-<div id="pct_18" class="pct-line">pct_18:</div>
-<div id="pct_7" class="pct-line">pct_7:</div>
-
 <div class="icon-row">
   <div class="icon-item" onclick="location.href='home.html'">🏠</div>
   <div class="icon-item" onclick="location.href='token.html'">🏅</div>
@@ -204,7 +188,6 @@ const supabaseClient = createClient(
 </div>
 
 <script>
-/* WHEEL SLOTS */
 const wheelSlots = [
   ...Array.from({length:26}, (_,i)=>String.fromCharCode(65+i)),
   ...Array.from({length:26}, (_,i)=>String.fromCharCode(97+i)),
@@ -216,7 +199,6 @@ let results = [];
 let spinning = false;
 let pauseTimer = false;
 
-/* RESTORE TOKEN + DATE */
 const savedToken = localStorage.getItem("spinpooltokenValue");
 if (savedToken) {
   document.getElementById("spinpooltoken").textContent = savedToken;
@@ -227,12 +209,10 @@ if (savedDate) {
   document.getElementById("bingo-date").textContent = "Date: " + savedDate;
 }
 
-/* CANVAS */
 const canvas = document.getElementById("wheel");
 const ctx = canvas.getContext("2d");
 const radius = 160;
 
-/* DRAW WHEEL */
 function drawWheel(rotation=0) {
   const slice = (2 * Math.PI) / wheelSlots.length;
   ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -263,7 +243,6 @@ function drawWheel(rotation=0) {
 
 drawWheel();
 
-/* FLASH */
 function flashSlice(index) {
   const slice = (2 * Math.PI) / wheelSlots.length;
   const start = index * slice;
@@ -292,7 +271,6 @@ function flashSlice(index) {
   }, 100);
 }
 
-/* SPIN ONE */
 function spinOne() {
   if (spinPool.length === 0) spinPool = [...wheelSlots];
   const index = Math.floor(Math.random() * spinPool.length);
@@ -301,7 +279,6 @@ function spinOne() {
   return value;
 }
 
-/* ANIMATE SPIN */
 function animateSpin(targetValue) {
   return new Promise(resolve => {
 
@@ -337,159 +314,73 @@ function animateSpin(targetValue) {
   });
 }
 
-/* DISPLAY RESULTS */
 function updateResultsDisplay() {
   document.getElementById("spin-results").textContent =
     results.join("   ");
 }
 
-/* --------------------------------------------------
-   REWARD DISTRIBUTION LOGIC
--------------------------------------------------- */
+async function runSpinWheel() {
+  if (spinning) return;
+  spinning = true;
+  pauseTimer = true;
 
-async function processRewards() {
+  results = [];
+  updateResultsDisplay();
 
-  let spinpooltoken = Number(document.getElementById("spinpooltoken").textContent);
+  document.getElementById("bingo-display").textContent = "BINGO:";
 
-  const percent_18 = spinpooltoken * 0.18;
-  const percent_15 = spinpooltoken * 0.15;
-  const percent_12 = spinpooltoken * 0.12;
-  const percent_9  = spinpooltoken * 0.09;
-  const percent_6  = spinpooltoken * 0.06;
-  const percent_3  = spinpooltoken * 0.03;
-  const percent_7  = spinpooltoken * 0.07;
-
-  const { data: rows, error } = await supabaseClient
-    .from("BingoSQL")
-    .select("id, crypto_wallet_id, rewardtoken");
-
-  if (error) {
-    console.log("READ ERROR:", error);
-    return;
+  for (let i = 0; i < 6; i++) {
+    const value = spinOne();
+    await animateSpin(value);
+    results.unshift(value);
+    updateResultsDisplay();
   }
 
-  function countLeft(rows, index, char) {
-    return rows.filter(r => r.crypto_wallet_id[index] === char).length;
+  const bingoCode = results.join("");
+
+  const spinDate = new Date().toString();
+  localStorage.setItem("lastSpinDate", spinDate);
+  document.getElementById("bingo-date").textContent = "Date: " + spinDate;
+
+  document.getElementById("bingo-display").textContent =
+    "BINGO: " + bingoCode;
+
+  const newToken = 1250;
+  document.getElementById("spinpooltoken").textContent = newToken;
+  localStorage.setItem("spinpooltokenValue", newToken);
+
+  spinning = false;
+  pauseTimer = false;
+}
+
+function updateTimer() {
+  if (pauseTimer) return;
+
+  const now = new Date();
+
+  if (!window.testTargetTime) {
+    window.testTargetTime = new Date(now.getTime() + (5 * 60 * 1000));
   }
 
-  function countRight(rows, index, char) {
-    return rows.filter(r => r.crypto_wallet_id[r.crypto_wallet_id.length - 1 - index] === char).length;
+  const diff = window.testTargetTime - now;
+
+  const minutes = Math.floor((diff / (1000 * 60)) % 60);
+  const seconds = Math.floor((diff / 1000) % 60);
+
+  document.getElementById("timer").textContent =
+    `${minutes}m ${seconds}s`;
+
+  if (diff <= 1000) {
+    runSpinWheel();
+    window.testTargetTime = new Date(new Date().getTime() + (5 * 60 * 1000));
   }
+}
 
-  async function addReward(indexLeft, charLeft, indexRight, charRight, pct) {
-    for (const r of rows) {
-      const leftMatch  = r.crypto_wallet_id[indexLeft] === charLeft;
-      const rightMatch = r.crypto_wallet_id[r.crypto_wallet_id.length - 1 - indexRight] === charRight;
+setInterval(updateTimer, 1000);
+updateTimer();
 
-      if (leftMatch || rightMatch) {
-        const newReward = (r.rewardtoken || 0) + pct;
+</script>
 
-        await supabaseClient
-          .from("BingoSQL")
-          .update({ rewardtoken: newReward })
-          .eq("id", r.id);
-      }
-    }
-  }
+</body>
+</html>
 
-  /* 1st: A left, Z right */
-  const c1_left  = countLeft(rows, 0, "A");
-  const c1_right = countRight(rows, 0, "Z");
-  const c1_total = c1_left + c1_right;
-
-  let subtract_3 = 0;
-  if (c1_total !== 0) {
-    const pct_3 = percent_3 / c1_total;
-    subtract_3 = percent_3;
-    document.getElementById("pct_3").textContent = "pct_3: " + pct_3.toFixed(6);
-    await addReward(0, "A", 0, "Z", pct_3);
-  }
-
-  /* 2nd: 2 left/right */
-  const c2_left  = countLeft(rows, 1, "2");
-  const c2_right = countRight(rows, 1, "2");
-  const c2_total = c2_left + c2_right;
-
-  let subtract_6 = 0;
-  if (c2_total !== 0) {
-    const pct_6 = percent_6 / c2_total;
-    subtract_6 = percent_6;
-    document.getElementById("pct_6").textContent = "pct_6: " + pct_6.toFixed(6);
-    await addReward(1, "2", 1, "2", pct_6);
-  }
-
-  /* 3rd: Q left/right */
-  const c3_left  = countLeft(rows, 2, "Q");
-  const c3_right = countRight(rows, 2, "Q");
-  const c3_total = c3_left + c3_right;
-
-  let subtract_9 = 0;
-  if (c3_total !== 0) {
-    const pct_9 = percent_9 / c3_total;
-    subtract_9 = percent_9;
-    document.getElementById("pct_9").textContent = "pct_9: " + pct_9.toFixed(6);
-    await addReward(2, "Q", 2, "Q", pct_9);
-  }
-
-  /* 4th: 7 left/right */
-  const c4_left  = countLeft(rows, 3, "7");
-  const c4_right = countRight(rows, 3, "7");
-  const c4_total = c4_left + c4_right;
-
-  let subtract_12 = 0;
-  if (c4_total !== 0) {
-    const pct_12 = percent_12 / c4_total;
-    subtract_12 = percent_12;
-    document.getElementById("pct_12").textContent = "pct_12: " + pct_12.toFixed(6);
-    await addReward(3, "7", 3, "7", pct_12);
-  }
-
-  /* 5th: f left/right */
-  const c5_left  = countLeft(rows, 4, "f");
-  const c5_right = countRight(rows, 4, "f");
-  const c5_total = c5_left + c5_right;
-
-  let subtract_15 = 0;
-  if (c5_total !== 0) {
-    const pct_15 = percent_15 / c5_total;
-    subtract_15 = percent_15;
-    document.getElementById("pct_15").textContent = "pct_15: " + pct_15.toFixed(6);
-    await addReward(4, "f", 4, "f", pct_15);
-  }
-
-  /* 6th: A left/right */
-  const c6_left  = countLeft(rows, 5, "A");
-  const c6_right = countRight(rows, 5, "A");
-  const c6_total = c6_left + c6_right;
-
-  let subtract_18 = 0;
-  if (c6_total !== 0) {
-    const pct_18 = percent_18 / c6_total;
-    subtract_18 = percent_18;
-    document.getElementById("pct_18").textContent = "pct_18: " + pct_18.toFixed(6);
-    await addReward(5, "A", 5, "A", pct_18);
-  }
-
-  /* 7th: full match Af7Q2Z */
-  const target = "Af7Q2Z";
-
-  const c7_left  = rows.filter(r => r.crypto_wallet_id.startsWith(target)).length;
-  const c7_right = rows.filter(r => r.crypto_wallet_id.endsWith(target)).length;
-  const c7_total = c7_left + c7_right;
-
-  let subtract_7 = 0;
-  if (c7_total !== 0) {
-    const pct_7 = percent_7 / c7_total;
-    subtract_7 = percent_7;
-    document.getElementById("pct_7").textContent = "pct_7: " + pct_7.toFixed(6);
-
-    for (const r of rows) {
-      const leftMatch  = r.crypto_wallet_id.startsWith(target);
-      const rightMatch = r.crypto_wallet_id.endsWith(target);
-
-      if (leftMatch || rightMatch) {
-        const newReward = (r.rewardtoken || 0) + pct_7;
-
-        await supabaseClient
-          .from("BingoSQL")
-          .update({ rewardtoken: newReward })
