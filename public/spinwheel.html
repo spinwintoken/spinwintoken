@@ -254,6 +254,12 @@ function drawWheel(rotation=0) {
 
 drawWheel();
 
+/* REQUIRED — THIS WAS MISSING */
+function updateResultsDisplay() {
+  document.getElementById("spin-results").textContent =
+    results.join("   ");
+}
+
 /* READ BingoSQL USING FIRST BINGO CHARACTER */
 async function displayBingoSQL(matchChar) {
 
@@ -328,6 +334,74 @@ async function runSpinWheel() {
   pauseTimer = false;
 }
 
+function spinOne() {
+  if (spinPool.length === 0) spinPool = [...wheelSlots];
+  const index = Math.floor(Math.random() * spinPool.length);
+  const value = spinPool[index];
+  spinPool.splice(index, 1);
+  return value;
+}
+
+function animateSpin(targetValue) {
+  return new Promise(resolve => {
+
+    const targetIndex = wheelSlots.indexOf(targetValue);
+    const slice = (2 * Math.PI) / wheelSlots.length;
+
+    const fullRotations = 3 * 2 * Math.PI;
+    const targetAngle = fullRotations + (slice * targetIndex);
+
+    const duration = 3000;
+    const startTime = performance.now();
+
+    function frame(now) {
+      const elapsed = now - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+
+      const angle = targetAngle * progress;
+
+      drawWheel(angle);
+
+      if (progress >= 1) {
+        flashSlice(targetIndex);
+        resolve();
+      } else {
+        requestAnimationFrame(frame);
+      }
+    }
+
+    requestAnimationFrame(frame);
+  });
+}
+
+function flashSlice(index) {
+  const slice = (2 * Math.PI) / wheelSlots.length;
+  const start = index * slice;
+  const end = start + slice;
+
+  let flashOn = true;
+  let count = 0;
+
+  const flashInterval = setInterval(() => {
+    count++;
+
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(radius, radius);
+    ctx.arc(radius, radius, radius, start, end);
+
+    ctx.fillStyle = flashOn
+      ? "rgba(255, 215, 0, 0.55)"
+      : "rgba(255, 215, 0, 0.0)";
+    ctx.fill();
+
+    ctx.restore();
+    flashOn = !flashOn;
+
+    if (count >= 10) clearInterval(flashInterval);
+  }, 100);
+}
+
 function updateTimer() {
   if (pauseTimer) return;
 
@@ -358,6 +432,7 @@ updateTimer();
 
 </body>
 </html>
+
 
 
 
