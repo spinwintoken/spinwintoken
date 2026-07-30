@@ -152,7 +152,6 @@ const supabaseClient = createClient(
 );
 </script>
 
-<!-- SAFE AUDIO (NO 404 ERRORS) -->
 <audio id="spinSound"></audio>
 <audio id="winSound"></audio>
 
@@ -188,7 +187,6 @@ const supabaseClient = createClient(
 <div id="bingo-display">BINGO:</div>
 <div id="bingo-date">Date:</div>
 
-<!-- NEW BingoSQL display -->
 <div id="bingoSQL_display"></div>
 
 <div class="icon-row">
@@ -303,7 +301,6 @@ function animateSpin(targetValue) {
     const duration = 3000;
     const startTime = performance.now();
 
-    // SAFE: no sound file, no errors
     try { document.getElementById("spinSound").play().catch(()=>{}); } catch(e){}
 
     function frame(now) {
@@ -339,16 +336,19 @@ async function displayBingoSQL() {
     .from("BingoSQL")
     .select("crypto_wallet_id");
 
-  if (error) {
-    console.log("READ ERROR:", error);
-    return;
-  }
-
   let output = "<strong>BingoSQL Wallets:</strong><br><br>";
 
-  rows.forEach(r => {
-    output += r.crypto_wallet_id + "<br>";
-  });
+  if (error) {
+    output += "ERROR reading table.<br>";
+  }
+
+  if (!rows || rows.length === 0) {
+    output += "NO DATA FOUND in BingoSQL.<br>";
+  } else {
+    rows.forEach(r => {
+      output += r.crypto_wallet_id + "<br>";
+    });
+  }
 
   document.getElementById("bingoSQL_display").innerHTML = output;
 }
@@ -416,4 +416,5 @@ updateTimer();
 
 </body>
 </html>
+
 
