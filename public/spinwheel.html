@@ -152,18 +152,9 @@ const supabaseClient = createClient(
 );
 </script>
 
-<!-- AUDIO -->
-<audio id="spinSound" src="spin.mp3"></audio>
-<audio id="winSound" src="win.mp3"></audio>
-
-<!-- ENABLE SOUND ONLY AFTER USER CLICKS -->
-<script>
-let soundEnabled = false;
-
-document.addEventListener("click", () => {
-  soundEnabled = true;
-});
-</script>
+<!-- SAFE AUDIO (NO 404 ERRORS) -->
+<audio id="spinSound"></audio>
+<audio id="winSound"></audio>
 
 <div class="logo-row">
   <div class="logo-icon">🎡</div>
@@ -197,6 +188,7 @@ document.addEventListener("click", () => {
 <div id="bingo-display">BINGO:</div>
 <div id="bingo-date">Date:</div>
 
+<!-- NEW BingoSQL display -->
 <div id="bingoSQL_display"></div>
 
 <div class="icon-row">
@@ -311,9 +303,8 @@ function animateSpin(targetValue) {
     const duration = 3000;
     const startTime = performance.now();
 
-    if (soundEnabled) {
-      try { document.getElementById("spinSound").play().catch(()=>{}); } catch(e){}
-    }
+    // SAFE: no sound file, no errors
+    try { document.getElementById("spinSound").play().catch(()=>{}); } catch(e){}
 
     function frame(now) {
       const elapsed = now - startTime;
@@ -324,9 +315,7 @@ function animateSpin(targetValue) {
       drawWheel(angle);
 
       if (progress >= 1) {
-        if (soundEnabled) {
-          try { document.getElementById("winSound").play().catch(()=>{}); } catch(e){}
-        }
+        try { document.getElementById("winSound").play().catch(()=>{}); } catch(e){}
         flashSlice(targetIndex);
         resolve();
       } else {
@@ -427,3 +416,4 @@ updateTimer();
 
 </body>
 </html>
+
