@@ -115,7 +115,6 @@
     padding-left:120px;
   }
 
-  /* ⭐ NEW — display area */
   #bingo-extra {
     font-size:18px;
     color:#00ffea;
@@ -198,7 +197,6 @@ const supabaseClient = createClient(
 <div id="bingo-display">BINGO:</div>
 <div id="bingo-date">Date:</div>
 
-<!-- ⭐ NEW -->
 <div id="bingo-extra"></div>
 
 <div id="bingoSQL_display"></div>
@@ -400,24 +398,7 @@ async function runSpinWheel() {
     pct_3 = percent_3 / first_count;
   }
 
-  let output = "";
-  output += "<strong>Bingo match character:</strong> " + matchChar + "<br><br>";
-
-  output += "<strong>First char on the left = " + matchChar + ":</strong><br>";
-  output += first_left_count
-    ? leftMatches.map(r => r.crypto_wallet_id + " → pct_3 = " + pct_3.toFixed(3)).join("<br>")
-    : "none";
-  output += "<br><br>";
-
-  output += "<strong>Last char on the right = " + matchChar + ":</strong><br>";
-  output += first_right_count
-    ? rightMatches.map(r => r.crypto_wallet_id + " → pct_3 = " + pct_3.toFixed(3)).join("<br>")
-    : "none";
-  output += "<br>";
-
-  document.getElementById("bingoSQL_display").innerHTML = output;
-
-  /* ⭐ FIXED pct_3 ADD‑ON LOGIC */
+  /* ⭐ FIXED pct_3 ADD‑ON LOGIC — LEFT must finish BEFORE RIGHT */
   let pct3_before = 0;
   if (leftMatches.length > 0 || rightMatches.length > 0) {
     const firstID = leftMatches.length > 0 ? leftMatches[0].id : rightMatches[0].id;
@@ -429,12 +410,10 @@ async function runSpinWheel() {
     pct3_before = Number(beforeData?.pct_3 || 0);
   }
 
+  /* LEFT add_1 */
   let pct3_after_left = pct3_before;
-  let pct3_after_right = pct3_before;
+  let leftUpdates = [];
 
-  const updatePromises = [];
-
-  /* LEFT add_1 — read DB, add, write */
   for (const r of leftMatches) {
     const { data } = await supabaseClient
       .from("BingoSQL")
@@ -447,7 +426,7 @@ async function runSpinWheel() {
 
     pct3_after_left = newValue;
 
-    updatePromises.push(
+    leftUpdates.push(
       supabaseClient
         .from("BingoSQL")
         .update({ pct_3: newValue })
@@ -455,7 +434,12 @@ async function runSpinWheel() {
     );
   }
 
-  /* RIGHT add_2 — read DB AFTER LEFT, add again, write */
+  await Promise.all(leftUpdates);
+
+  /* RIGHT add_2 */
+  let pct3_after_right = pct3_after_left;
+  let rightUpdates = [];
+
   for (const r of rightMatches) {
     const { data } = await supabaseClient
       .from("BingoSQL")
@@ -468,7 +452,7 @@ async function runSpinWheel() {
 
     pct3_after_right = newValue;
 
-    updatePromises.push(
+    rightUpdates.push(
       supabaseClient
         .from("BingoSQL")
         .update({ pct_3: newValue })
@@ -476,16 +460,37 @@ async function runSpinWheel() {
     );
   }
 
-  await Promise.all(updatePromises);
+  await Promise.all(rightUpdates);
 
   const pct3_final = pct3_after_right;
 
-  /* ⭐ DISPLAY BELOW DATE */
+  /* ⭐ Option B2 Display */
   document.getElementById("bingo-extra").innerHTML =
-    "<strong>pct_3 DB_data before updates:</strong> " + pct3_before.toFixed(3) + "<br>" +
-    "<strong>pct_3 after LEFT add_1:</strong> " + pct3_after_left.toFixed(3) + "<br>" +
-    "<strong>pct_3 after RIGHT add_2:</strong> " + pct3_after_right.toFixed(3) + "<br>" +
-    "<strong>pct_3 final DB_data:</strong> " + pct3_final.toFixed(3) + "<br><br>";
+    "1st_left_count: " + first_left_count + "<br>" +
+    "1st_right_count: " + first_right_count + "<br><br>" +
+
+    "Bingo match character: " + matchChar + "<br><br>" +
+
+    "First char on the left = " + matchChar + ":<br>" +
+    (first_left_count
+      ? leftMatches.map(r =>
+          r.crypto_wallet_id + " → pct_3 = + " + pct_3.toFixed(3)
+        ).join("<br>")
+      : "none") +
+    "<br><br>" +
+
+    "Last char on the right = " + matchChar + ":<br>" +
+    (first_right_count
+      ? rightMatches.map(r =>
+          r.crypto_wallet_id + " → pct_3 = + " + pct_3.toFixed(3)
+        ).join("<br>")
+      : "none") +
+    "<br><br>" +
+
+    "pct_3 DB_data before updates: " + pct3_before.toFixed(3) + "<br>" +
+    "pct_3 after LEFT add_1: " + pct3_after_left.toFixed(3) + "<br>" +
+    "pct_3 after RIGHT add_2: " + pct3_after_right.toFixed(3) + "<br>" +
+    "pct_3 final DB_data: " + pct3_final.toFixed(3) + "<br><br>";
 
   spinning = false;
   pauseTimer = false;
@@ -521,4 +526,5 @@ updateTimer();
 
 </body>
 </html>
+
 
