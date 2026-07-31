@@ -382,7 +382,7 @@ async function runSpinWheel() {
     return last === matchChar;
   });
 
-  /* COUNTS — FIXED VARIABLE NAMES */
+  /* COUNTS */
   const first_left_count = leftMatches.length;
   const first_right_count = rightMatches.length;
   const first_count = first_left_count + first_right_count;
@@ -411,25 +411,47 @@ async function runSpinWheel() {
 
   document.getElementById("bingoSQL_display").innerHTML = output;
 
-  /* ACTION 12 — UPDATE BingoSQL pct_3 for all matches */
+  /* ACTION 2 — UPDATE BingoSQL pct_3 (increment, not replace) */
   if (pct_3 > 0) {
     const updatePromises = [];
 
+    /* LEFT matches */
     leftMatches.forEach(r => {
       updatePromises.push(
         supabaseClient
           .from("BingoSQL")
-          .update({ pct_3: pct_3 })
+          .select("pct_3")
           .eq("id", r.id)
+          .single()
+          .then(({ data }) => {
+            const oldValue = Number(data?.pct_3 || 0);
+            const newValue = oldValue + pct_3;
+
+            return supabaseClient
+              .from("BingoSQL")
+              .update({ pct_3: newValue })
+              .eq("id", r.id);
+          })
       );
     });
 
+    /* RIGHT matches */
     rightMatches.forEach(r => {
       updatePromises.push(
         supabaseClient
           .from("BingoSQL")
-          .update({ pct_3: pct_3 })
+          .select("pct_3")
           .eq("id", r.id)
+          .single()
+          .then(({ data }) => {
+            const oldValue = Number(data?.pct_3 || 0);
+            const newValue = oldValue + pct_3;
+
+            return supabaseClient
+              .from("BingoSQL")
+              .update({ pct_3: newValue })
+              .eq("id", r.id);
+          })
       );
     });
 
