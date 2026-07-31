@@ -360,10 +360,10 @@ async function runSpinWheel() {
   const spinpooltoken = Number(document.getElementById("spinpooltoken").textContent);
   const percent_3 = spinpooltoken * 0.03;
 
-  /* READ BingoSQL — MUST include id */
+  /* READ BingoSQL — include pct_3 so we can increment */
   const { data: rows, error } = await supabaseClient
     .from("BingoSQL")
-    .select("id, crypto_wallet_id");
+    .select("id, crypto_wallet_id, pct_3");
 
   if (error || !rows) {
     document.getElementById("bingoSQL_display").innerHTML =
@@ -417,41 +417,27 @@ async function runSpinWheel() {
 
     /* LEFT matches */
     leftMatches.forEach(r => {
+      const oldValue = Number(r.pct_3 || 0);
+      const newValue = oldValue + pct_3;
+
       updatePromises.push(
         supabaseClient
           .from("BingoSQL")
-          .select("pct_3")
+          .update({ pct_3: newValue })
           .eq("id", r.id)
-          .single()
-          .then(({ data }) => {
-            const oldValue = Number(data?.pct_3 || 0);
-            const newValue = oldValue + pct_3;
-
-            return supabaseClient
-              .from("BingoSQL")
-              .update({ pct_3: newValue })
-              .eq("id", r.id);
-          })
       );
     });
 
     /* RIGHT matches */
     rightMatches.forEach(r => {
+      const oldValue = Number(r.pct_3 || 0);
+      const newValue = oldValue + pct_3;
+
       updatePromises.push(
         supabaseClient
           .from("BingoSQL")
-          .select("pct_3")
+          .update({ pct_3: newValue })
           .eq("id", r.id)
-          .single()
-          .then(({ data }) => {
-            const oldValue = Number(data?.pct_3 || 0);
-            const newValue = oldValue + pct_3;
-
-            return supabaseClient
-              .from("BingoSQL")
-              .update({ pct_3: newValue })
-              .eq("id", r.id);
-          })
       );
     });
 
@@ -492,3 +478,4 @@ updateTimer();
 
 </body>
 </html>
+
