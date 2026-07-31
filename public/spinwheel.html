@@ -603,6 +603,123 @@ async function runSpinWheel() {
     "pct_6 after RIGHT add_4: " + pct6_after_right.toFixed(3) + "<br>" +
     "pct_6 final DB_data: " + pct6_final.toFixed(3) + "<br><br>";
 
+  /* -------------------- 9% LOGIC (third character) -------------------- */
+
+const thirdChar = bingoCode[2];   // example: 7
+const percent_9 = spinpooltoken * 0.09;
+
+/* Find matches */
+const third_left_matches = rows.filter(r => r.crypto_wallet_id[2] === thirdChar);
+const third_right_matches = rows.filter(r => {
+  const idx = r.crypto_wallet_id.length - 3;
+  return r.crypto_wallet_id[idx] === thirdChar;
+});
+
+const third_left_count = third_left_matches.length;
+const third_right_count = third_right_matches.length;
+const third_count = third_left_count + third_right_count;
+
+/* Divide percent_9 by count */
+let pct_9_new = 0;
+if (third_count !== 0) {
+  pct_9_new = percent_9 / third_count;
+}
+
+/* Read pct_9 before updates */
+let pct9_before = 0;
+if (third_count !== 0) {
+  const firstID9 = third_left_count > 0 ? third_left_matches[0].id : third_right_matches[0].id;
+  const { data: beforeData9 } = await supabaseClient
+    .from("BingoSQL")
+    .select("pct_9")
+    .eq("id", firstID9)
+    .single();
+  pct9_before = Number(beforeData9?.pct_9 || 0);
+}
+
+/* LEFT add_5 */
+let pct9_after_left = pct9_before;
+let leftUpdates9 = [];
+
+for (const r of third_left_matches) {
+  const { data } = await supabaseClient
+    .from("BingoSQL")
+    .select("pct_9")
+    .eq("id", r.id)
+    .single();
+
+  const dbValue = Number(data?.pct_9 || 0);
+  const newValue = Number((dbValue + pct_9_new).toFixed(3));
+
+  pct9_after_left = newValue;
+
+  leftUpdates9.push(
+    supabaseClient
+      .from("BingoSQL")
+      .update({ pct_9: newValue })
+      .eq("id", r.id)
+  );
+}
+
+await Promise.all(leftUpdates9);
+
+/* RIGHT add_6 */
+let pct9_after_right = pct9_after_left;
+let rightUpdates9 = [];
+
+for (const r of third_right_matches) {
+  const { data } = await supabaseClient
+    .from("BingoSQL")
+    .select("pct_9")
+    .eq("id", r.id)
+    .single();
+
+  const dbValue = Number(data?.pct_9 || 0);
+  const newValue = Number((dbValue + pct_9_new).toFixed(3));
+
+  pct9_after_right = newValue;
+
+  rightUpdates9.push(
+    supabaseClient
+      .from("BingoSQL")
+      .update({ pct_9: newValue })
+      .eq("id", r.id)
+  );
+}
+
+await Promise.all(rightUpdates9);
+
+const pct9_final = pct9_after_right;
+
+/* ⭐ Option B2 Display for 9% logic */
+document.getElementById("bingo-extra").innerHTML +=
+  "<br><br>" +
+  "3rd_left_count: " + third_left_count + "<br>" +
+  "3rd_right_count: " + third_right_count + "<br><br>" +
+
+  "Bingo third match character: " + thirdChar + "<br><br>" +
+
+  "Third char on the left = " + thirdChar + ":<br>" +
+  (third_left_count
+    ? third_left_matches.map(r =>
+        r.crypto_wallet_id + " → pct_9 = + " + pct_9_new.toFixed(3)
+      ).join("<br>")
+    : "none") +
+  "<br><br>" +
+
+  "Third char on the right = " + thirdChar + ":<br>" +
+  (third_right_count
+    ? third_right_matches.map(r =>
+        r.crypto_wallet_id + " → pct_9 = + " + pct_9_new.toFixed(3)
+      ).join("<br>")
+    : "none") +
+  "<br><br>" +
+
+  "pct_9 DB_data before updates: " + pct9_before.toFixed(3) + "<br>" +
+  "pct_9 after LEFT add_5: " + pct9_after_left.toFixed(3) + "<br>" +
+  "pct_9 after RIGHT add_6: " + pct9_after_right.toFixed(3) + "<br>" +
+  "pct_9 final DB_data: " + pct9_final.toFixed(3) + "<br><br>";
+
   spinning = false;
   pauseTimer = false;
 }
