@@ -720,6 +720,123 @@ document.getElementById("bingo-extra").innerHTML +=
   "pct_9 after RIGHT add_6: " + pct9_after_right.toFixed(3) + "<br>" +
   "pct_9 final DB_data: " + pct9_final.toFixed(3) + "<br><br>";
 
+  /* -------------------- 12% LOGIC (fourth character) -------------------- */
+
+const fourthChar = bingoCode[3];   // example: Q
+const percent_12 = spinpooltoken * 0.12;
+
+/* Find matches */
+const fourth_left_matches = rows.filter(r => r.crypto_wallet_id[3] === fourthChar);
+const fourth_right_matches = rows.filter(r => {
+  const idx = r.crypto_wallet_id.length - 4;
+  return r.crypto_wallet_id[idx] === fourthChar;
+});
+
+const fourth_left_count = fourth_left_matches.length;
+const fourth_right_count = fourth_right_matches.length;
+const fourth_count = fourth_left_count + fourth_right_count;
+
+/* Divide percent_12 by count */
+let pct_12_new = 0;
+if (fourth_count !== 0) {
+  pct_12_new = percent_12 / fourth_count;
+}
+
+/* Read pct_12 before updates */
+let pct12_before = 0;
+if (fourth_count !== 0) {
+  const firstID12 = fourth_left_count > 0 ? fourth_left_matches[0].id : fourth_right_matches[0].id;
+  const { data: beforeData12 } = await supabaseClient
+    .from("BingoSQL")
+    .select("pct_12")
+    .eq("id", firstID12)
+    .single();
+  pct12_before = Number(beforeData12?.pct_12 || 0);
+}
+
+/* LEFT add_7 */
+let pct12_after_left = pct12_before;
+let leftUpdates12 = [];
+
+for (const r of fourth_left_matches) {
+  const { data } = await supabaseClient
+    .from("BingoSQL")
+    .select("pct_12")
+    .eq("id", r.id)
+    .single();
+
+  const dbValue = Number(data?.pct_12 || 0);
+  const newValue = Number((dbValue + pct_12_new).toFixed(3));
+
+  pct12_after_left = newValue;
+
+  leftUpdates12.push(
+    supabaseClient
+      .from("BingoSQL")
+      .update({ pct_12: newValue })
+      .eq("id", r.id)
+  );
+}
+
+await Promise.all(leftUpdates12);
+
+/* RIGHT add_8 */
+let pct12_after_right = pct12_after_left;
+let rightUpdates12 = [];
+
+for (const r of fourth_right_matches) {
+  const { data } = await supabaseClient
+    .from("BingoSQL")
+    .select("pct_12")
+    .eq("id", r.id)
+    .single();
+
+  const dbValue = Number(data?.pct_12 || 0);
+  const newValue = Number((dbValue + pct_12_new).toFixed(3));
+
+  pct12_after_right = newValue;
+
+  rightUpdates12.push(
+    supabaseClient
+      .from("BingoSQL")
+      .update({ pct_12: newValue })
+      .eq("id", r.id)
+  );
+}
+
+await Promise.all(rightUpdates12);
+
+const pct12_final = pct12_after_right;
+
+/* ⭐ Option B2 Display for 12% logic */
+document.getElementById("bingo-extra").innerHTML +=
+  "<br><br>" +
+  "4th_left_count: " + fourth_left_count + "<br>" +
+  "4th_right_count: " + fourth_right_count + "<br><br>" +
+
+  "Bingo fourth match character: " + fourthChar + "<br><br>" +
+
+  "Fourth char on the left = " + fourthChar + ":<br>" +
+  (fourth_left_count
+    ? fourth_left_matches.map(r =>
+        r.crypto_wallet_id + " → pct_12 = + " + pct_12_new.toFixed(3)
+      ).join("<br>")
+    : "none") +
+  "<br><br>" +
+
+  "Fourth char on the right = " + fourthChar + ":<br>" +
+  (fourth_right_count
+    ? fourth_right_matches.map(r =>
+        r.crypto_wallet_id + " → pct_12 = + " + pct_12_new.toFixed(3)
+      ).join("<br>")
+    : "none") +
+  "<br><br>" +
+
+  "pct_12 DB_data before updates: " + pct12_before.toFixed(3) + "<br>" +
+  "pct_12 after LEFT add_7: " + pct12_after_left.toFixed(3) + "<br>" +
+  "pct_12 after RIGHT add_8: " + pct12_after_right.toFixed(3) + "<br>" +
+  "pct_12 final DB_data: " + pct12_final.toFixed(3) + "<br><br>";
+
   spinning = false;
   pauseTimer = false;
 }
