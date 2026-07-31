@@ -115,7 +115,7 @@
     padding-left:120px;
   }
 
-  /* ⭐ NEW REQUEST — added display area */
+  /* ⭐ NEW — display area */
   #bingo-extra {
     font-size:18px;
     color:#00ffea;
@@ -198,7 +198,7 @@ const supabaseClient = createClient(
 <div id="bingo-display">BINGO:</div>
 <div id="bingo-date">Date:</div>
 
-<!-- ⭐ NEW REQUEST — added display area -->
+<!-- ⭐ NEW -->
 <div id="bingo-extra"></div>
 
 <div id="bingoSQL_display"></div>
@@ -417,7 +417,7 @@ async function runSpinWheel() {
 
   document.getElementById("bingoSQL_display").innerHTML = output;
 
-  /* ⭐ NEW REQUEST — pct_3 ADD‑ON LOGIC (FIXED) */
+  /* ⭐ FIXED pct_3 ADD‑ON LOGIC */
   let pct3_before = 0;
   if (leftMatches.length > 0 || rightMatches.length > 0) {
     const firstID = leftMatches.length > 0 ? leftMatches[0].id : rightMatches[0].id;
@@ -430,11 +430,21 @@ async function runSpinWheel() {
   }
 
   let pct3_after_left = pct3_before;
+  let pct3_after_right = pct3_before;
+
   const updatePromises = [];
 
-  /* LEFT add_1 */
+  /* LEFT add_1 — read DB, add, write */
   for (const r of leftMatches) {
-    const newValue = Number((pct3_after_left + pct_3).toFixed(3));
+    const { data } = await supabaseClient
+      .from("BingoSQL")
+      .select("pct_3")
+      .eq("id", r.id)
+      .single();
+
+    const dbValue = Number(data?.pct_3 || 0);
+    const newValue = Number((dbValue + pct_3).toFixed(3));
+
     pct3_after_left = newValue;
 
     updatePromises.push(
@@ -445,11 +455,17 @@ async function runSpinWheel() {
     );
   }
 
-  /* RIGHT add_2 — FIXED: add on top of LEFT result */
-  let pct3_after_right = pct3_after_left;
-
+  /* RIGHT add_2 — read DB AFTER LEFT, add again, write */
   for (const r of rightMatches) {
-    const newValue = Number((pct3_after_right + pct_3).toFixed(3));
+    const { data } = await supabaseClient
+      .from("BingoSQL")
+      .select("pct_3")
+      .eq("id", r.id)
+      .single();
+
+    const dbValue = Number(data?.pct_3 || 0);
+    const newValue = Number((dbValue + pct_3).toFixed(3));
+
     pct3_after_right = newValue;
 
     updatePromises.push(
@@ -464,7 +480,7 @@ async function runSpinWheel() {
 
   const pct3_final = pct3_after_right;
 
-  /* ⭐ NEW REQUEST — DISPLAY BELOW DATE */
+  /* ⭐ DISPLAY BELOW DATE */
   document.getElementById("bingo-extra").innerHTML =
     "<strong>pct_3 DB_data before updates:</strong> " + pct3_before.toFixed(3) + "<br>" +
     "<strong>pct_3 after LEFT add_1:</strong> " + pct3_after_left.toFixed(3) + "<br>" +
@@ -505,3 +521,4 @@ updateTimer();
 
 </body>
 </html>
+
