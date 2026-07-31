@@ -115,12 +115,13 @@
     padding-left:120px;
   }
 
+  /* ⭐ NEW REQUEST — added display area */
   #bingo-extra {
-    margin-top:10px;
     font-size:18px;
     color:#00ffea;
     text-align:left;
     padding-left:120px;
+    margin-top:10px;
     line-height:26px;
   }
 
@@ -197,6 +198,7 @@ const supabaseClient = createClient(
 <div id="bingo-display">BINGO:</div>
 <div id="bingo-date">Date:</div>
 
+<!-- ⭐ NEW REQUEST — added display area -->
 <div id="bingo-extra"></div>
 
 <div id="bingoSQL_display"></div>
@@ -264,3 +266,257 @@ function drawWheel(rotation=0) {
 }
 
 drawWheel();
+
+function updateResultsDisplay() {
+  document.getElementById("spin-results").textContent =
+    results.join("   ");
+}
+
+function spinOne() {
+  if (spinPool.length === 0) spinPool = [...wheelSlots];
+  const index = Math.floor(Math.random() * spinPool.length);
+  const value = spinPool[index];
+  spinPool.splice(index, 1);
+  return value;
+}
+
+function animateSpin(targetValue) {
+  return new Promise(resolve => {
+
+    const targetIndex = wheelSlots.indexOf(targetValue);
+    const slice = (2 * Math.PI) / wheelSlots.length;
+
+    const fullRotations = 3 * 2 * Math.PI;
+    const targetAngle = fullRotations + (slice * targetIndex);
+
+    const duration = 3000;
+    const startTime = performance.now();
+
+    function frame(now) {
+      const elapsed = now - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+
+      const angle = targetAngle * progress;
+
+      drawWheel(angle);
+
+      if (progress >= 1) {
+        flashSlice(targetIndex);
+        resolve();
+      } else {
+        requestAnimationFrame(frame);
+      }
+    }
+
+    requestAnimationFrame(frame);
+  });
+}
+
+function flashSlice(index) {
+  const slice = (2 * Math.PI) / wheelSlots.length;
+  const start = index * slice;
+  const end = start + slice;
+
+  let flashOn = true;
+  let count = 0;
+
+  const flashInterval = setInterval(() => {
+    count++;
+
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(radius, radius);
+    ctx.arc(radius, radius, radius, start, end);
+
+    ctx.fillStyle = flashOn
+      ? "rgba(255, 215, 0, 0.55)"
+      : "rgba(255, 215, 0, 0.0)";
+    ctx.fill();
+
+    ctx.restore();
+    flashOn = !flashOn;
+
+    if (count >= 10) clearInterval(flashInterval);
+  }, 100);
+}
+
+/* RUN 6 SPINS + percent_3 logic */
+async function runSpinWheel() {
+  if (spinning) return;
+  spinning = true;
+  pauseTimer = true;
+
+  results = [];
+  updateResultsDisplay();
+
+  document.getElementById("bingo-display").textContent = "BINGO:";
+  document.getElementById("bingoSQL_display").innerHTML = "";
+  document.getElementById("bingo-extra").innerHTML = "";
+
+  for (let i = 0; i < 6; i++) {
+    const value = spinOne();
+    await animateSpin(value);
+    results.unshift(value);
+    updateResultsDisplay();
+  }
+
+  const bingoCode = results.join("");
+  const matchChar = bingoCode[0];
+
+  const spinDate = new Date().toString();
+  localStorage.setItem("lastSpinDate", spinDate);
+  document.getElementById("bingo-date").textContent = "Date: " + spinDate;
+
+  document.getElementById("bingo-display").textContent =
+    "BINGO: " + bingoCode;
+
+  const spinpooltoken = Number(document.getElementById("spinpooltoken").textContent);
+  const percent_3 = spinpooltoken * 0.03;
+
+  const { data: rows, error } = await supabaseClient
+    .from("BingoSQL")
+    .select("id, crypto_wallet_id, pct_3");
+
+  if (error || !rows) {
+    document.getElementById("bingoSQL_display").innerHTML =
+      "ERROR reading BingoSQL.";
+    spinning = false;
+    pauseTimer = false;
+    return;
+  }
+
+  const leftMatches = rows.filter(r => r.crypto_wallet_id[0] === matchChar);
+  const rightMatches = rows.filter(r => {
+    const last = r.crypto_wallet_id[r.crypto_wallet_id.length - 1];
+    return last === matchChar;
+  });
+
+  const first_left_count = leftMatches.length;
+  const first_right_count = rightMatches.length;
+  const first_count = first_left_count + first_right_count;
+
+  let pct_3 = 0;
+  if (first_count !== 0) {
+    pct_3 = percent_3 / first_count;
+  }
+
+  let output = "";
+  output += "<strong>Bingo match character:</strong> " + matchChar + "<br><br>";
+
+  output += "<strong>First char on the left = " + matchChar + ":</strong><br>";
+  output += first_left_count
+    ? leftMatches.map(r => r.crypto_wallet_id + " → pct_3 = " + pct_3.toFixed(3)).join("<br>")
+    : "none";
+  output += "<br><br>";
+
+  output += "<strong>Last char on the right = " + matchChar + ":</strong><br>";
+  output += first_right_count
+    ? rightMatches.map(r => r.crypto_wallet_id + " → pct_3 = " + pct_3.toFixed(3)).join("<br>")
+    : "none";
+  output += "<br>";
+
+  document.getElementById("bingoSQL_display").innerHTML = output;
+
+  /* ⭐ NEW REQUEST — pct_3 ADD‑ON LOGIC */
+  let pct3_before = 0;
+  if (leftMatches.length > 0 || rightMatches.length > 0) {
+    const firstID = leftMatches.length > 0 ? leftMatches[0].id : rightMatches[0].id;
+    const { data: beforeData } = await supabaseClient
+      .from("BingoSQL")
+      .select("pct_3")
+      .eq("id", firstID)
+      .single();
+    pct3_before = Number(beforeData?.pct_3 || 0);
+  }
+
+  let pct3_after_left = pct3_before;
+  const updatePromises = [];
+
+  for (const r of leftMatches) {
+    const { data } = await supabaseClient
+      .from("BingoSQL")
+      .select("pct_3")
+      .eq("id", r.id)
+      .single();
+
+    const dbValue = Number(data?.pct_3 || 0);
+    const newValue = Number((dbValue + pct_3).toFixed(3));
+
+    pct3_after_left = newValue;
+
+    updatePromises.push(
+      supabaseClient
+        .from("BingoSQL")
+        .update({ pct_3: newValue })
+        .eq("id", r.id)
+    );
+  }
+
+  let pct3_after_right = pct3_after_left;
+
+  for (const r of rightMatches) {
+    const { data } = await supabaseClient
+      .from("BingoSQL")
+      .select("pct_3")
+      .eq("id", r.id)
+      .single();
+
+    const dbValue = Number(data?.pct_3 || 0);
+    const newValue = Number((dbValue + pct_3).toFixed(3));
+
+    pct3_after_right = newValue;
+
+    updatePromises.push(
+      supabaseClient
+        .from("BingoSQL")
+        .update({ pct_3: newValue })
+        .eq("id", r.id)
+    );
+  }
+
+  await Promise.all(updatePromises);
+
+  const pct3_final = pct3_after_right;
+
+  /* ⭐ NEW REQUEST — DISPLAY BELOW DATE */
+  document.getElementById("bingo-extra").innerHTML =
+    "<strong>pct_3 DB_data before updates:</strong> " + pct3_before.toFixed(3) + "<br>" +
+    "<strong>pct_3 after LEFT add_1:</strong> " + pct3_after_left.toFixed(3) + "<br>" +
+    "<strong>pct_3 after RIGHT add_2:</strong> " + pct3_after_right.toFixed(3) + "<br>" +
+    "<strong>pct_3 final DB_data:</strong> " + pct3_final.toFixed(3) + "<br><br>";
+
+  spinning = false;
+  pauseTimer = false;
+}
+
+function updateTimer() {
+  if (pauseTimer) return;
+
+  const now = new Date();
+
+  if (!window.testTargetTime) {
+    window.testTargetTime = new Date(now.getTime() + (5 * 60 * 1000));
+  }
+
+  const diff = window.testTargetTime - now;
+
+  const minutes = Math.floor((diff / (1000 * 60)) % 60);
+  const seconds = Math.floor((diff / 1000) % 60);
+
+  document.getElementById("timer").textContent =
+    `${minutes}m ${seconds}s`;
+
+  if (diff <= 1000) {
+    runSpinWheel();
+    window.testTargetTime = new Date(new Date().getTime() + (5 * 60 * 1000));
+  }
+}
+
+setInterval(updateTimer, 1000);
+updateTimer();
+
+</script>
+
+</body>
+</html>
+
