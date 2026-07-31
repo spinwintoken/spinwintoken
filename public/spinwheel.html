@@ -383,7 +383,7 @@ async function runSpinWheel() {
     return;
   }
 
-  /* -------------------- 3% LOGIC (already working) -------------------- */
+  /* -------------------- 3% LOGIC -------------------- */
 
   const leftMatches = rows.filter(r => r.crypto_wallet_id[0] === matchChar);
   const rightMatches = rows.filter(r => {
@@ -462,6 +462,34 @@ async function runSpinWheel() {
   await Promise.all(rightUpdates);
 
   const pct3_final = pct3_after_right;
+
+  /* ⭐ Option B2 Display for 3% */
+  document.getElementById("bingo-extra").innerHTML =
+    "1st_left_count: " + first_left_count + "<br>" +
+    "1st_right_count: " + first_right_count + "<br><br>" +
+
+    "Bingo match character: " + matchChar + "<br><br>" +
+
+    "First char on the left = " + matchChar + ":<br>" +
+    (first_left_count
+      ? leftMatches.map(r =>
+          r.crypto_wallet_id + " → pct_3 = + " + pct_3.toFixed(3)
+        ).join("<br>")
+      : "none") +
+    "<br><br>" +
+
+    "Last char on the right = " + matchChar + ":<br>" +
+    (first_right_count
+      ? rightMatches.map(r =>
+          r.crypto_wallet_id + " → pct_3 = + " + pct_3.toFixed(3)
+        ).join("<br>")
+      : "none") +
+    "<br><br>" +
+
+    "pct_3 DB_data before updates: " + pct3_before.toFixed(3) + "<br>" +
+    "pct_3 after LEFT add_1: " + pct3_after_left.toFixed(3) + "<br>" +
+    "pct_3 after RIGHT add_2: " + pct3_after_right.toFixed(3) + "<br>" +
+    "pct_3 final DB_data: " + pct3_final.toFixed(3) + "<br><br>";
 
   /* -------------------- 6% LOGIC (second character) -------------------- */
 
@@ -546,9 +574,67 @@ async function runSpinWheel() {
 
   const pct6_final = pct6_after_right;
 
-  /* -------------------- DISPLAY (Option B2) -------------------- */
+  /* ⭐ Extra display for 6% logic */
+  document.getElementById("bingo-extra").innerHTML +=
+    "<br><br>" +
+    "2nd_left_count: " + second_left_count + "<br>" +
+    "2nd_right_count: " + second_right_count + "<br><br>" +
 
-  document.getElementById("bingo-extra").innerHTML =
-    "1st_left_count: " + first_left_count + "<br>" +
-    "1st_right_count: " + first_right_count + "<br><br>" +
+    "Bingo second match character: " + secondChar + "<br><br>" +
+
+    "Second char on the left = " + secondChar + ":<br>" +
+    (second_left_count
+      ? second_left_matches.map(r =>
+          r.crypto_wallet_id + " → pct_6 = + " + pct_6_new.toFixed(3)
+        ).join("<br>")
+      : "none") +
+    "<br><br>" +
+
+    "Second char on the right = " + secondChar + ":<br>" +
+    (second_right_count
+      ? second_right_matches.map(r =>
+          r.crypto_wallet_id + " → pct_6 = + " + pct_6_new.toFixed(3)
+        ).join("<br>")
+      : "none") +
+    "<br><br>" +
+
+    "pct_6 DB_data before updates: " + pct6_before.toFixed(3) + "<br>" +
+    "pct_6 after LEFT add_3: " + pct6_after_left.toFixed(3) + "<br>" +
+    "pct_6 after RIGHT add_4: " + pct6_after_right.toFixed(3) + "<br>" +
+    "pct_6 final DB_data: " + pct6_final.toFixed(3) + "<br><br>";
+
+  spinning = false;
+  pauseTimer = false;
+}
+
+function updateTimer() {
+  if (pauseTimer) return;
+
+  const now = new Date();
+
+  if (!window.testTargetTime) {
+    window.testTargetTime = new Date(now.getTime() + (5 * 60 * 1000));
+  }
+
+  const diff = window.testTargetTime - now;
+
+  const minutes = Math.floor((diff / (1000 * 60)) % 60);
+  const seconds = Math.floor((diff / 1000) % 60);
+
+  document.getElementById("timer").textContent =
+    `${minutes}m ${seconds}s`;
+
+  if (diff <= 1000) {
+    runSpinWheel();
+    window.testTargetTime = new Date(new Date().getTime() + (5 * 60 * 1000));
+  }
+}
+
+setInterval(updateTimer, 1000);
+updateTimer();
+
+</script>
+
+</body>
+</html>
 
