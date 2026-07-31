@@ -417,27 +417,41 @@ async function runSpinWheel() {
 
     /* LEFT matches */
     leftMatches.forEach(r => {
-      const oldValue = Number(r.pct_3 || 0);
-      const newValue = Number((oldValue + pct_3).toFixed(3));
-
       updatePromises.push(
         supabaseClient
           .from("BingoSQL")
-          .update({ pct_3: newValue })
+          .select("pct_3")
           .eq("id", r.id)
+          .single()
+          .then(({ data }) => {
+            const oldValue = Number(data?.pct_3 || 0);
+            const newValue = Number((oldValue + pct_3).toFixed(3));
+
+            return supabaseClient
+              .from("BingoSQL")
+              .update({ pct_3: newValue })
+              .eq("id", r.id);
+          })
       );
     });
 
     /* RIGHT matches */
     rightMatches.forEach(r => {
-      const oldValue = Number(r.pct_3 || 0);
-      const newValue = Number((oldValue + pct_3).toFixed(3));
-
       updatePromises.push(
         supabaseClient
           .from("BingoSQL")
-          .update({ pct_3: newValue })
+          .select("pct_3")
           .eq("id", r.id)
+          .single()
+          .then(({ data }) => {
+            const oldValue = Number(data?.pct_3 || 0);
+            const newValue = Number((oldValue + pct_3).toFixed(3));
+
+            return supabaseClient
+              .from("BingoSQL")
+              .update({ pct_3: newValue })
+              .eq("id", r.id);
+          })
       );
     });
 
@@ -478,6 +492,7 @@ updateTimer();
 
 </body>
 </html>
+
 
 
 
