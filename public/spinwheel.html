@@ -387,10 +387,10 @@ async function runSpinWheel() {
   const first_right_count = rightMatches.length;
   const first_count = first_left_count + first_right_count;
 
-  /* pct_3 calculation */
+  /* pct_3 calculation — rounded to 3 decimals */
   let pct_3 = 0;
   if (first_count !== 0) {
-    pct_3 = percent_3 / first_count;
+    pct_3 = Number((percent_3 / first_count).toFixed(3));
   }
 
   /* DISPLAY crypto_wallet_id + pct_3 */
@@ -478,5 +478,6 @@ updateTimer();
 
 </body>
 </html>
+
 
 
