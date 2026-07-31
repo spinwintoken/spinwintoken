@@ -411,14 +411,14 @@ async function runSpinWheel() {
 
   document.getElementById("bingoSQL_display").innerHTML = output;
 
-  /* ACTION 2 — UPDATE BingoSQL pct_3 (increment, not replace) */
+  /* ACTION 2 — UPDATE BingoSQL pct_3 (increment, not overwrite) */
   if (pct_3 > 0) {
     const updatePromises = [];
 
     /* LEFT matches */
     leftMatches.forEach(r => {
       const oldValue = Number(r.pct_3 || 0);
-      const newValue = oldValue + pct_3;
+      const newValue = Number((oldValue + pct_3).toFixed(3));
 
       updatePromises.push(
         supabaseClient
@@ -431,7 +431,7 @@ async function runSpinWheel() {
     /* RIGHT matches */
     rightMatches.forEach(r => {
       const oldValue = Number(r.pct_3 || 0);
-      const newValue = oldValue + pct_3;
+      const newValue = Number((oldValue + pct_3).toFixed(3));
 
       updatePromises.push(
         supabaseClient
@@ -478,4 +478,5 @@ updateTimer();
 
 </body>
 </html>
+
 
