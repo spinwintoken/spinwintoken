@@ -382,40 +382,43 @@ async function runSpinWheel() {
     return last === matchChar;
   });
 
-  /* COUNTS */
-  const first_left_count = leftMatches.length;
-  const first_right_count = rightMatches.length;
-  const first_count = first_left_count + first_right_count;
+  const leftCount = leftMatches.length;
+  const rightCount = rightMatches.length;
 
-  /* pct_3 calculation — rounded to 3 decimals */
-  let pct_3 = 0;
-  if (first_count !== 0) {
-    pct_3 = Number((percent_3 / first_count).toFixed(3));
+  /* pct_3 for left and right separately */
+  let pct_3_left = 0;
+  let pct_3_right = 0;
+
+  if (leftCount > 0) {
+    pct_3_left = Number((percent_3 / leftCount).toFixed(3));
+  }
+  if (rightCount > 0) {
+    pct_3_right = Number((percent_3 / rightCount).toFixed(3));
   }
 
-  /* DISPLAY crypto_wallet_id + pct_3 */
+  /* DISPLAY crypto_wallet_id + pct_3_left / pct_3_right */
   let output = "";
   output += "<strong>Bingo match character:</strong> " + matchChar + "<br><br>";
 
   output += "<strong>First char on the left = " + matchChar + ":</strong><br>";
-  output += first_left_count
-    ? leftMatches.map(r => r.crypto_wallet_id + " → pct_3 = " + pct_3.toFixed(3)).join("<br>")
+  output += leftCount
+    ? leftMatches.map(r => r.crypto_wallet_id + " → pct_3 (left) = " + pct_3_left.toFixed(3)).join("<br>")
     : "none";
   output += "<br><br>";
 
   output += "<strong>Last char on the right = " + matchChar + ":</strong><br>";
-  output += first_right_count
-    ? rightMatches.map(r => r.crypto_wallet_id + " → pct_3 = " + pct_3.toFixed(3)).join("<br>")
+  output += rightCount
+    ? rightMatches.map(r => r.crypto_wallet_id + " → pct_3 (right) = " + pct_3_right.toFixed(3)).join("<br>")
     : "none";
   output += "<br>";
 
   document.getElementById("bingoSQL_display").innerHTML = output;
 
   /* ACTION 2 — UPDATE BingoSQL pct_3 (increment, not overwrite) */
-  if (pct_3 > 0) {
-    const updatePromises = [];
+  const updatePromises = [];
 
-    /* LEFT matches */
+  /* LEFT: read DB, add pct_3_left */
+  if (pct_3_left > 0) {
     leftMatches.forEach(r => {
       updatePromises.push(
         supabaseClient
@@ -425,7 +428,7 @@ async function runSpinWheel() {
           .single()
           .then(({ data }) => {
             const oldValue = Number(data?.pct_3 || 0);
-            const newValue = Number((oldValue + pct_3).toFixed(3));
+            const newValue = Number((oldValue + pct_3_left).toFixed(3));
 
             return supabaseClient
               .from("BingoSQL")
@@ -434,8 +437,10 @@ async function runSpinWheel() {
           })
       );
     });
+  }
 
-    /* RIGHT matches */
+  /* RIGHT: read DB, add pct_3_right */
+  if (pct_3_right > 0) {
     rightMatches.forEach(r => {
       updatePromises.push(
         supabaseClient
@@ -445,7 +450,7 @@ async function runSpinWheel() {
           .single()
           .then(({ data }) => {
             const oldValue = Number(data?.pct_3 || 0);
-            const newValue = Number((oldValue + pct_3).toFixed(3));
+            const newValue = Number((oldValue + pct_3_right).toFixed(3));
 
             return supabaseClient
               .from("BingoSQL")
@@ -454,7 +459,9 @@ async function runSpinWheel() {
           })
       );
     });
+  }
 
+  if (updatePromises.length > 0) {
     await Promise.all(updatePromises);
   }
 
@@ -489,7 +496,7 @@ setInterval(updateTimer, 1000);
 updateTimer();
 
 </script>
-
+/* RIGHT: read DB, add pct_3_right */
 </body>
 </html>
 
