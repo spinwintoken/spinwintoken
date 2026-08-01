@@ -1071,7 +1071,7 @@ document.getElementById("bingo-extra").innerHTML +=
   "pct_18 after RIGHT add_12: " + pct18_after_right.toFixed(3) + "<br>" +
   "pct_18 final DB_data: " + pct18_final.toFixed(3) + "<br><br>";
 
-  /* -------------------- 7% LOGIC (all six characters) -------------------- */
+/* -------------------- 7% LOGIC (all six characters) -------------------- */
 
 const percent_7 = spinpooltoken * 0.07;
 
@@ -1185,7 +1185,7 @@ document.getElementById("bingo-extra").innerHTML +=
 
   "Bingo ALL 6 match characters: " + bingoCode + "<br><br>" +
 
-  "LEFT side (A f 7 Q 2 Z):<br>" +
+  "LEFT side (match all 6):<br>" +
   (seventh_left_count
     ? seventh_left_matches.map(r =>
         r.crypto_wallet_id + " → pct_7 = + " + pct_7_new.toFixed(3)
@@ -1193,7 +1193,7 @@ document.getElementById("bingo-extra").innerHTML +=
     : "none") +
   "<br><br>" +
 
-  "RIGHT side (Z 2 Q 7 f A):<br>" +
+  "RIGHT side (match all 6 reversed):<br>" +
   (seventh_right_count
     ? seventh_right_matches.map(r =>
         r.crypto_wallet_id + " → pct_7 = + " + pct_7_new.toFixed(3)
