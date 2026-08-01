@@ -167,7 +167,7 @@ function searchWord() {
   const resultBox = document.getElementById("wordSearchResult");
 
   if (!word) {
-    resultBox.innerHTML = "Please type a word to search.";
+    resultBox.innerHTML = "spinpool";
     return;
   }
 
@@ -200,11 +200,42 @@ function searchWord() {
           style="padding:8px 15px; margin-left:5px; border-radius:6px;">
     🔍 Search
   </button>
+
+  <div style="margin: 15px; text-align:center;">
+  <input id="wordSearchInput" 
+         type="text" 
+         placeholder="Search text on this page..."
+         onkeyup="searchWord()"   <!-- ⭐ KEYBOARD SEARCH HERE ⭐ -->
+         style="padding:8px; width:70%; border-radius:6px;">
 </div>
 
 <div id="wordSearchResult" 
      style="margin-top:10px; color:#ffd700; text-align:center;">
 </div>
+</div>
+
+<div id="wordSearchResult" 
+     style="margin-top:10px; color:#ffd700; text-align:center;">
+</div>
+
+  function searchWord() {
+  const word = document.getElementById("wordSearchInput").value.trim();
+  const resultBox = document.getElementById("wordSearchResult");
+
+  if (!word) {
+    resultBox.innerHTML = "";
+    return;
+  }
+
+  const pageText = document.body.innerText.toLowerCase();
+  const searchWord = word.toLowerCase();
+
+  if (pageText.includes(searchWord)) {
+    resultBox.innerHTML = "✅ Found: \"" + word + "\" on this page.";
+  } else {
+    resultBox.innerHTML = "❌ Not found: \"" + word + "\".";
+  }
+}
 <!-- ⭐ END WORD SEARCH BOX ⭐ -->
 
 <div class="top-row">
