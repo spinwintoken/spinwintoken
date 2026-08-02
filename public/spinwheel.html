@@ -1164,14 +1164,14 @@ async function runSpinWheel() {
       : "none") +
     "<br><br>" +
 
-    "pct_7 DB_data before updates: " + pct7_before.toFixed(4) + "<br>" +
-    "pct_7 after LEFT add_13: " + pct7_after_left.toFixed(4) + "<br>" +
-    "pct_7 after RIGHT add_14: " + pct7_after_right.toFixed(4) + "<br>" +
-    "pct_7 final DB_data: " + pct7_final.toFixed(4) + "<br><br>";
+   "pct_7 DB_data before updates: " + pct7_before.toFixed(4) + "<br>" +
+"pct_7 after LEFT add_13: " + pct7_after_left.toFixed(4) + "<br>" +
+"pct_7 after RIGHT add_14: " + pct7_after_right.toFixed(4) + "<br>" +
+"pct_7 final DB_data: " + pct7_final.toFixed(4) + "<br><br>";
 
-  /* -------------------- RESET SPINPOOLTOKEN (4 decimals) -------------------- */
+/* -------------------- RESET SPINPOOLTOKEN (4 decimals) -------------------- */
 
-let spinpool_remaining_percent = 0.30; // 30%
+let spinpool_remaining_percent = 0.30; // base 30%
 
 if (first_count === 0)   spinpool_remaining_percent += 0.03;
 if (second_count === 0)  spinpool_remaining_percent += 0.06;
@@ -1192,6 +1192,10 @@ document.getElementById("bingoSQL_display").innerHTML =
   "SpinPool remaining percent: " + (spinpool_remaining_percent * 100).toFixed(4) + "%<br>" +
   "SpinPool remaining value: " + spinpool_remaining_value.toFixed(4) + "<br>" +
   "Reset SpinPoolToken (next base): " + reset_spinpooltoken.toFixed(4);
+
+spinning = false;
+pauseTimer = false;
+}  // ← THIS closes runSpinWheel() correctly
 
   spinning = false;
   pauseTimer = false;
