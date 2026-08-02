@@ -59,6 +59,8 @@
     background:#111;
     padding:10px;
     box-sizing:border-box;
+    margin-left:auto;
+    margin-right:auto;
   }
 
   table {
@@ -66,6 +68,9 @@
     border-collapse:collapse;
     color:#ffd700;
     font-size:16px;
+    margin-left:auto;
+    margin-right:auto;
+    text-align:center;
   }
 
   th {
@@ -172,8 +177,8 @@ async function loadTable() {
 
     html += `
       <tr>
-        <td class="wallet">${first6} ... ${last6}</td>
-        <td class="pct">${pct7_new}</td>
+        <td align="center" class="wallet">${first6} ... ${last6}</td>
+        <td align="center" class="pct">${pct7_new}</td>
       </tr>
     `;
   });
@@ -192,11 +197,11 @@ async function loadTable() {
 <div id="bingo-code">@ @ @ @ @ @</div>
 
 <div class="table-container">
-  <table>
+  <table align="center">
     <thead>
       <tr>
-        <th>crypto_wallet_id</th>
-        <th>pct_7_new</th>
+        <th align="center">crypto_wallet_id</th>
+        <th align="center">pct_7_new</th>
       </tr>
     </thead>
     <tbody id="table-body"></tbody>
@@ -214,3 +219,4 @@ async function loadTable() {
 
 </body>
 </html>
+
