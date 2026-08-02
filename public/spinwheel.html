@@ -1207,49 +1207,35 @@ document.getElementById("bingo-extra").innerHTML +=
   "pct_7 after RIGHT add_14: " + pct7_after_right.toFixed(3) + "<br>" +
   "pct_7 final DB_data: " + pct7_final.toFixed(3) + "<br><br>";
 
-  /* ⭐ RESET SPINPOOLTOKEN LOGIC (CORRECT VERSION) ⭐ */
+ /* ⭐ RESET SPINPOOLTOKEN LOGIC (FINAL VERSION) ⭐ */
 
 let totalPercent = 0;
 
 /* Add percent_3 only if first_count ≠ 0 */
-if (first_count !== 0) {
-  totalPercent += percent_3;
-}
+if (first_count !== 0) totalPercent += percent_3;
 
 /* Add percent_6 only if second_count ≠ 0 */
-if (second_count !== 0) {
-  totalPercent += percent_6;
-}
+if (second_count !== 0) totalPercent += percent_6;
 
 /* Add percent_9 only if third_count ≠ 0 */
-if (third_count !== 0) {
-  totalPercent += percent_9;
-}
+if (third_count !== 0) totalPercent += percent_9;
 
 /* Add percent_12 only if fourth_count ≠ 0 */
-if (fourth_count !== 0) {
-  totalPercent += percent_12;
-}
+if (fourth_count !== 0) totalPercent += percent_12;
 
 /* Add percent_15 only if fifth_count ≠ 0 */
-if (fifth_count !== 0) {
-  totalPercent += percent_15;
-}
+if (fifth_count !== 0) totalPercent += percent_15;
 
 /* Add percent_18 only if sixth_count ≠ 0 */
-if (sixth_count !== 0) {
-  totalPercent += percent_18;
-}
+if (sixth_count !== 0) totalPercent += percent_18;
 
 /* Add percent_7 only if seventh_count ≠ 0 */
-if (seventh_count !== 0) {
-  totalPercent += percent_7;
-}
+if (seventh_count !== 0) totalPercent += percent_7;
 
-/* Remaining spinpooltoken */
+/* Remaining spinpooltoken = 1250 - used percents */
 const remaining = 1250 - totalPercent;
 
-/* Reset spinpooltoken */
+/* Reset spinpooltoken = 1250 + remaining */
 const reset_spinpooltoken = 1250 + remaining;
 
 /* Display reset spinpooltoken in the main token box */
