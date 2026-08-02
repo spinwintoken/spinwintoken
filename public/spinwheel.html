@@ -182,7 +182,7 @@ const supabaseClient = createClient(
   <div class="half-box">
     <div class="icon-box">
       <div class="bingo-icon">🎯</div>
-      <div id="spinpooltoken" class="token-value">1250.0000</div>
+      <div id="spinpooltoken" class="token-value">1250</div>
       <div class="token-small">Token</div>
     </div>
   </div>
@@ -431,7 +431,7 @@ async function runSpinWheel() {
       .single();
 
     const dbValue = Number(data?.pct_3 || 0);
-    const newValue = Number((dbValue + pct_3).toFixed(4));
+    const newValue = Number((dbValue + pct_3).toFixed(3));
 
     pct3_after_left = newValue;
 
@@ -456,7 +456,7 @@ async function runSpinWheel() {
       .single();
 
     const dbValue = Number(data?.pct_3 || 0);
-    const newValue = Number((dbValue + pct_3).toFixed(4));
+    const newValue = Number((dbValue + pct_3).toFixed(3));
 
     pct3_after_right = newValue;
 
@@ -481,7 +481,7 @@ async function runSpinWheel() {
     "First char on the left = " + matchChar + ":<br>" +
     (first_left_count
       ? leftMatches.map(r =>
-          r.crypto_wallet_id + " → pct_3 = + " + pct_3.toFixed(4)
+          r.crypto_wallet_id + " → pct_3 = + " + pct_3.toFixed(3)
         ).join("<br>")
       : "none") +
     "<br><br>" +
@@ -489,15 +489,15 @@ async function runSpinWheel() {
     "Last char on the right = " + matchChar + ":<br>" +
     (first_right_count
       ? rightMatches.map(r =>
-          r.crypto_wallet_id + " → pct_3 = + " + pct_3.toFixed(4)
+          r.crypto_wallet_id + " → pct_3 = + " + pct_3.toFixed(3)
         ).join("<br>")
       : "none") +
     "<br><br>" +
 
-    "pct_3 DB_data before updates: " + pct3_before.toFixed(4) + "<br>" +
-    "pct_3 after LEFT add_1: " + pct3_after_left.toFixed(4) + "<br>" +
-    "pct_3 after RIGHT add_2: " + pct3_after_right.toFixed(4) + "<br>" +
-    "pct_3 final DB_data: " + pct3_final.toFixed(4) + "<br><br>";
+    "pct_3 DB_data before updates: " + pct3_before.toFixed(3) + "<br>" +
+    "pct_3 after LEFT add_1: " + pct3_after_left.toFixed(3) + "<br>" +
+    "pct_3 after RIGHT add_2: " + pct3_after_right.toFixed(3) + "<br>" +
+    "pct_3 final DB_data: " + pct3_final.toFixed(3) + "<br><br>";
 
   /* -------------------- 6% LOGIC (second character) -------------------- */
 
@@ -539,8 +539,8 @@ async function runSpinWheel() {
       .eq("id", r.id)
       .single();
 
-      const dbValue = Number(data?.pct_6 || 0);
-    const newValue = Number((dbValue + pct_6_new).toFixed(4));
+    const dbValue = Number(data?.pct_6 || 0);
+    const newValue = Number((dbValue + pct_6_new).toFixed(3));
 
     pct6_after_left = newValue;
 
@@ -565,7 +565,7 @@ async function runSpinWheel() {
       .single();
 
     const dbValue = Number(data?.pct_6 || 0);
-    const newValue = Number((dbValue + pct_6_new).toFixed(4));
+    const newValue = Number((dbValue + pct_6_new).toFixed(3));
 
     pct6_after_right = newValue;
 
@@ -591,7 +591,7 @@ async function runSpinWheel() {
     "Second char on the left = " + secondChar + ":<br>" +
     (second_left_count
       ? second_left_matches.map(r =>
-          r.crypto_wallet_id + " → pct_6 = + " + pct_6_new.toFixed(4)
+          r.crypto_wallet_id + " → pct_6 = + " + pct_6_new.toFixed(3)
         ).join("<br>")
       : "none") +
     "<br><br>" +
@@ -599,19 +599,20 @@ async function runSpinWheel() {
     "Second char on the right = " + secondChar + ":<br>" +
     (second_right_count
       ? second_right_matches.map(r =>
-          r.crypto_wallet_id + " → pct_6 = + " + pct_6_new.toFixed(4)
+          r.crypto_wallet_id + " → pct_6 = + " + pct_6_new.toFixed(3)
         ).join("<br>")
       : "none") +
     "<br><br>" +
 
-    "pct_6 DB_data before updates: " + pct6_before.toFixed(4) + "<br>" +
-    "pct_6 after LEFT add_3: " + pct6_after_left.toFixed(4) + "<br>" +
-    "pct_6 after RIGHT add_4: " + pct6_after_right.toFixed(4) + "<br>" +
-    "pct_6 final DB_data: " + pct6_final.toFixed(4) + "<br><br>";
+    "pct_6 DB_data before updates: " + pct6_before.toFixed(3) + "<br>" +
+    "pct_6 after LEFT add_3: " + pct6_after_left.toFixed(3) + "<br>" +
+    "pct_6 after RIGHT add_4: " + pct6_after_right.toFixed(3) + "<br>" +
+    "pct_6 final DB_data: " + pct6_final.toFixed(3) + "<br><br>";
 
   /* -------------------- 9% LOGIC (third character) -------------------- */
 
   const thirdChar = bingoCode[2];
+
   const third_left_matches = rows.filter(r => r.crypto_wallet_id[2] === thirdChar);
   const third_right_matches = rows.filter(r => {
     const idx = r.crypto_wallet_id.length - 3;
@@ -649,7 +650,7 @@ async function runSpinWheel() {
       .single();
 
     const dbValue = Number(data?.pct_9 || 0);
-    const newValue = Number((dbValue + pct_9_new).toFixed(4));
+    const newValue = Number((dbValue + pct_9_new).toFixed(3));
 
     pct9_after_left = newValue;
 
@@ -674,7 +675,7 @@ async function runSpinWheel() {
       .single();
 
     const dbValue = Number(data?.pct_9 || 0);
-    const newValue = Number((dbValue + pct_9_new).toFixed(4));
+    const newValue = Number((dbValue + pct_9_new).toFixed(3));
 
     pct9_after_right = newValue;
 
@@ -700,7 +701,7 @@ async function runSpinWheel() {
     "Third char on the left = " + thirdChar + ":<br>" +
     (third_left_count
       ? third_left_matches.map(r =>
-          r.crypto_wallet_id + " → pct_9 = + " + pct_9_new.toFixed(4)
+          r.crypto_wallet_id + " → pct_9 = + " + pct_9_new.toFixed(3)
         ).join("<br>")
       : "none") +
     "<br><br>" +
@@ -708,19 +709,20 @@ async function runSpinWheel() {
     "Third char on the right = " + thirdChar + ":<br>" +
     (third_right_count
       ? third_right_matches.map(r =>
-          r.crypto_wallet_id + " → pct_9 = + " + pct_9_new.toFixed(4)
+          r.crypto_wallet_id + " → pct_9 = + " + pct_9_new.toFixed(3)
         ).join("<br>")
       : "none") +
     "<br><br>" +
 
-    "pct_9 DB_data before updates: " + pct9_before.toFixed(4) + "<br>" +
-    "pct_9 after LEFT add_5: " + pct9_after_left.toFixed(4) + "<br>" +
-    "pct_9 after RIGHT add_6: " + pct9_after_right.toFixed(4) + "<br>" +
-    "pct_9 final DB_data: " + pct9_final.toFixed(4) + "<br><br>";
+    "pct_9 DB_data before updates: " + pct9_before.toFixed(3) + "<br>" +
+    "pct_9 after LEFT add_5: " + pct9_after_left.toFixed(3) + "<br>" +
+    "pct_9 after RIGHT add_6: " + pct9_after_right.toFixed(3) + "<br>" +
+    "pct_9 final DB_data: " + pct9_final.toFixed(3) + "<br><br>";
 
   /* -------------------- 12% LOGIC (fourth character) -------------------- */
 
   const fourthChar = bingoCode[3];
+
   const fourth_left_matches = rows.filter(r => r.crypto_wallet_id[3] === fourthChar);
   const fourth_right_matches = rows.filter(r => {
     const idx = r.crypto_wallet_id.length - 4;
@@ -758,7 +760,7 @@ async function runSpinWheel() {
       .single();
 
     const dbValue = Number(data?.pct_12 || 0);
-    const newValue = Number((dbValue + pct_12_new).toFixed(4));
+    const newValue = Number((dbValue + pct_12_new).toFixed(3));
 
     pct12_after_left = newValue;
 
@@ -783,7 +785,7 @@ async function runSpinWheel() {
       .single();
 
     const dbValue = Number(data?.pct_12 || 0);
-    const newValue = Number((dbValue + pct_12_new).toFixed(4));
+    const newValue = Number((dbValue + pct_12_new).toFixed(3));
 
     pct12_after_right = newValue;
 
@@ -809,7 +811,7 @@ async function runSpinWheel() {
     "Fourth char on the left = " + fourthChar + ":<br>" +
     (fourth_left_count
       ? fourth_left_matches.map(r =>
-          r.crypto_wallet_id + " → pct_12 = + " + pct_12_new.toFixed(4)
+          r.crypto_wallet_id + " → pct_12 = + " + pct_12_new.toFixed(3)
         ).join("<br>")
       : "none") +
     "<br><br>" +
@@ -817,19 +819,20 @@ async function runSpinWheel() {
     "Fourth char on the right = " + fourthChar + ":<br>" +
     (fourth_right_count
       ? fourth_right_matches.map(r =>
-          r.crypto_wallet_id + " → pct_12 = + " + pct_12_new.toFixed(4)
+          r.crypto_wallet_id + " → pct_12 = + " + pct_12_new.toFixed(3)
         ).join("<br>")
       : "none") +
     "<br><br>" +
 
-    "pct_12 DB_data before updates: " + pct12_before.toFixed(4) + "<br>" +
-    "pct_12 after LEFT add_7: " + pct12_after_left.toFixed(4) + "<br>" +
-    "pct_12 after RIGHT add_8: " + pct12_after_right.toFixed(4) + "<br>" +
-    "pct_12 final DB_data: " + pct12_final.toFixed(4) + "<br><br>";
+    "pct_12 DB_data before updates: " + pct12_before.toFixed(3) + "<br>" +
+    "pct_12 after LEFT add_7: " + pct12_after_left.toFixed(3) + "<br>" +
+    "pct_12 after RIGHT add_8: " + pct12_after_right.toFixed(3) + "<br>" +
+    "pct_12 final DB_data: " + pct12_final.toFixed(3) + "<br><br>";
 
   /* -------------------- 15% LOGIC (fifth character) -------------------- */
 
   const fifthChar = bingoCode[4];
+
   const fifth_left_matches = rows.filter(r => r.crypto_wallet_id[4] === fifthChar);
   const fifth_right_matches = rows.filter(r => {
     const idx = r.crypto_wallet_id.length - 5;
@@ -867,7 +870,7 @@ async function runSpinWheel() {
       .single();
 
     const dbValue = Number(data?.pct_15 || 0);
-    const newValue = Number((dbValue + pct_15_new).toFixed(4));
+    const newValue = Number((dbValue + pct_15_new).toFixed(3));
 
     pct15_after_left = newValue;
 
@@ -892,7 +895,7 @@ async function runSpinWheel() {
       .single();
 
     const dbValue = Number(data?.pct_15 || 0);
-    const newValue = Number((dbValue + pct_15_new).toFixed(4));
+    const newValue = Number((dbValue + pct_15_new).toFixed(3));
 
     pct15_after_right = newValue;
 
@@ -918,7 +921,7 @@ async function runSpinWheel() {
     "Fifth char on the left = " + fifthChar + ":<br>" +
     (fifth_left_count
       ? fifth_left_matches.map(r =>
-          r.crypto_wallet_id + " → pct_15 = + " + pct_15_new.toFixed(4)
+          r.crypto_wallet_id + " → pct_15 = + " + pct_15_new.toFixed(3)
         ).join("<br>")
       : "none") +
     "<br><br>" +
@@ -926,19 +929,20 @@ async function runSpinWheel() {
     "Fifth char on the right = " + fifthChar + ":<br>" +
     (fifth_right_count
       ? fifth_right_matches.map(r =>
-          r.crypto_wallet_id + " → pct_15 = + " + pct_15_new.toFixed(4)
+          r.crypto_wallet_id + " → pct_15 = + " + pct_15_new.toFixed(3)
         ).join("<br>")
       : "none") +
     "<br><br>" +
 
-    "pct_15 DB_data before updates: " + pct15_before.toFixed(4) + "<br>" +
-    "pct_15 after LEFT add_9: " + pct15_after_left.toFixed(4) + "<br>" +
-    "pct_15 after RIGHT add_10: " + pct15_after_right.toFixed(4) + "<br>" +
-    "pct_15 final DB_data: " + pct15_final.toFixed(4) + "<br><br>";
+    "pct_15 DB_data before updates: " + pct15_before.toFixed(3) + "<br>" +
+    "pct_15 after LEFT add_9: " + pct15_after_left.toFixed(3) + "<br>" +
+    "pct_15 after RIGHT add_10: " + pct15_after_right.toFixed(3) + "<br>" +
+    "pct_15 final DB_data: " + pct15_final.toFixed(3) + "<br><br>";
 
   /* -------------------- 18% LOGIC (sixth character) -------------------- */
 
   const sixthChar = bingoCode[5];
+
   const sixth_left_matches = rows.filter(r => r.crypto_wallet_id[5] === sixthChar);
   const sixth_right_matches = rows.filter(r => {
     const idx = r.crypto_wallet_id.length - 6;
@@ -976,7 +980,7 @@ async function runSpinWheel() {
       .single();
 
     const dbValue = Number(data?.pct_18 || 0);
-    const newValue = Number((dbValue + pct_18_new).toFixed(4));
+    const newValue = Number((dbValue + pct_18_new).toFixed(3));
 
     pct18_after_left = newValue;
 
@@ -1001,7 +1005,7 @@ async function runSpinWheel() {
       .single();
 
     const dbValue = Number(data?.pct_18 || 0);
-    const newValue = Number((dbValue + pct_18_new).toFixed(4));
+    const newValue = Number((dbValue + pct_18_new).toFixed(3));
 
     pct18_after_right = newValue;
 
@@ -1027,7 +1031,7 @@ async function runSpinWheel() {
     "Sixth char on the left = " + sixthChar + ":<br>" +
     (sixth_left_count
       ? sixth_left_matches.map(r =>
-          r.crypto_wallet_id + " → pct_18 = + " + pct_18_new.toFixed(4)
+          r.crypto_wallet_id + " → pct_18 = + " + pct_18_new.toFixed(3)
         ).join("<br>")
       : "none") +
     "<br><br>" +
@@ -1035,15 +1039,15 @@ async function runSpinWheel() {
     "Sixth char on the right = " + sixthChar + ":<br>" +
     (sixth_right_count
       ? sixth_right_matches.map(r =>
-          r.crypto_wallet_id + " → pct_18 = + " + pct_18_new.toFixed(4)
+          r.crypto_wallet_id + " → pct_18 = + " + pct_18_new.toFixed(3)
         ).join("<br>")
       : "none") +
     "<br><br>" +
 
-    "pct_18 DB_data before updates: " + pct18_before.toFixed(4) + "<br>" +
-    "pct_18 after LEFT add_11: " + pct18_after_left.toFixed(4) + "<br>" +
-    "pct_18 after RIGHT add_12: " + pct18_after_right.toFixed(4) + "<br>" +
-    "pct_18 final DB_data: " + pct18_final.toFixed(4) + "<br><br>";
+    "pct_18 DB_data before updates: " + pct18_before.toFixed(3) + "<br>" +
+    "pct_18 after LEFT add_11: " + pct18_after_left.toFixed(3) + "<br>" +
+    "pct_18 after RIGHT add_12: " + pct18_after_right.toFixed(3) + "<br>" +
+    "pct_18 final DB_data: " + pct18_final.toFixed(3) + "<br><br>";
 
   /* -------------------- 7% LOGIC (all six characters) -------------------- */
 
@@ -1100,7 +1104,7 @@ async function runSpinWheel() {
       .single();
 
     const dbValue = Number(data?.pct_7 || 0);
-    const newValue = Number((dbValue + pct_7_new).toFixed(4));
+    const newValue = Number((dbValue + pct_7_new).toFixed(3));
 
     pct7_after_left = newValue;
 
@@ -1125,7 +1129,7 @@ async function runSpinWheel() {
       .single();
 
     const dbValue = Number(data?.pct_7 || 0);
-    const newValue = Number((dbValue + pct_7_new).toFixed(4));
+    const newValue = Number((dbValue + pct_7_new).toFixed(3));
 
     pct7_after_right = newValue;
 
@@ -1151,7 +1155,7 @@ async function runSpinWheel() {
     "LEFT side (match all 6):<br>" +
     (seventh_left_count
       ? seventh_left_matches.map(r =>
-          r.crypto_wallet_id + " → pct_7 = + " + pct_7_new.toFixed(4)
+          r.crypto_wallet_id + " → pct_7 = + " + pct_7_new.toFixed(3)
         ).join("<br>")
       : "none") +
     "<br><br>" +
@@ -1159,19 +1163,43 @@ async function runSpinWheel() {
     "RIGHT side (match all 6 reversed):<br>" +
     (seventh_right_count
       ? seventh_right_matches.map(r =>
-          r.crypto_wallet_id + " → pct_7 = + " + pct_7_new.toFixed(4)
+          r.crypto_wallet_id + " → pct_7 = + " + pct_7_new.toFixed(3)
         ).join("<br>")
       : "none") +
     "<br><br>" +
 
-   "pct_7 DB_data before updates: " + pct7_before.toFixed(4) + "<br>" +
-"pct_7 after LEFT add_13: " + pct7_after_left.toFixed(4) + "<br>" +
-"pct_7 after RIGHT add_14: " + pct7_after_right.toFixed(4) + "<br>" +
-"pct_7 final DB_data: " + pct7_final.toFixed(4) + "<br><br>";
+    "pct_7 DB_data before updates: " + pct7_before.toFixed(3) + "<br>" +
+    "pct_7 after LEFT add_13: " + pct7_after_left.toFixed(3) + "<br>" +
+    "pct_7 after RIGHT add_14: " + pct7_after_right.toFixed(3) + "<br>" +
+    "pct_7 final DB_data: " + pct7_final.toFixed(3) + "<br><br>";
 
-/* -------------------- RESET SPINPOOLTOKEN (4 decimals) -------------------- */
+  /* -------------------- RESET SPINPOOLTOKEN (simple % not used logic) -------------------- */
 
-let spinpool_remaining_percent = 0.30; // base 30%
+  let spinpool_remaining_percent = 0.30; // 30%
+
+  if (first_count === 0)   spinpool_remaining_percent += 0.03;
+  if (second_count === 0)  spinpool_remaining_percent += 0.06;
+  if (third_count === 0)   spinpool_remaining_percent += 0.09;
+  if (fourth_count === 0)  spinpool_remaining_percent += 0.12;
+  if (fifth_count === 0)   spinpool_remaining_percent += 0.15;
+  if (sixth_count === 0)   spinpool_remaining_percent += 0.18;
+  if (seventh_count === 0) spinpool_remaining_percent += 0.07;
+
+  const spinpool_remaining_value = baseSpinpool * spinpool_remaining_percent;
+  const reset_spinpooltoken = spinpool_remaining_value + 1250;
+
+  document.getElementById("spinpooltoken").textContent = reset_spinpooltoken.toFixed(3);
+  localStorage.setItem("spinpooltokenValue", reset_spinpooltoken.toFixed(3));
+
+  document.getElementById("bingoSQL_display").innerHTML =
+    "SpinPoolToken base: " + baseSpinpool.toFixed(3) + "<br>" +
+    "SpinPool remaining percent: " + (spinpool_remaining_percent * 100).toFixed(2) + "%<br>" +
+    "SpinPool remaining value: " + spinpool_remaining_value.toFixed(3) + "<br>" +
+    "Reset SpinPoolToken (next base): " + reset_spinpooltoken.toFixed(3);
+
+  /* -------------------- RESET SPINPOOLTOKEN (simple % not used logic) -------------------- */
+
+let spinpool_remaining_percent = 0.30; // 30%
 
 if (first_count === 0)   spinpool_remaining_percent += 0.03;
 if (second_count === 0)  spinpool_remaining_percent += 0.06;
@@ -1192,14 +1220,12 @@ document.getElementById("bingoSQL_display").innerHTML =
   "SpinPool remaining percent: " + (spinpool_remaining_percent * 100).toFixed(4) + "%<br>" +
   "SpinPool remaining value: " + spinpool_remaining_value.toFixed(4) + "<br>" +
   "Reset SpinPoolToken (next base): " + reset_spinpooltoken.toFixed(4);
-
-spinning = false;
-pauseTimer = false;
-}  // ← THIS closes runSpinWheel() correctly
-
+  
   spinning = false;
   pauseTimer = false;
 }
+
+/* TIMER */
 
 function updateTimer() {
   if (pauseTimer) return;
