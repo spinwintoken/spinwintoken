@@ -526,4 +526,11 @@ async function runSpinWheel() {
       .select("pct_6")
       .eq("id", firstID6)
       .single();
-    pct6_before
+    pct6_before = Number(beforeData6?.pct_6 || 0);
+  }
+
+  let pct6_after_left = pct6_before;
+  let leftUpdates6 = [];
+
+  for (const r of second_left_matches) {
+    const { data } = await supabaseClient
