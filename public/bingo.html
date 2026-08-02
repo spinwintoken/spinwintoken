@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Bingo Results - SpinWinToken</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+  body {
+    background:#000;
+    color:#ffd700;
+    font-family:Arial, sans-serif;
+    margin:0;
+    padding:0;
+    text-align:center;
+    padding-bottom:90px;
+  }
+
+  .logo-row {
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:15px;
+    margin-top:20px;
+  }
+
+  .logo-icon { font-size:60px; }
+  .logo-title { font-size:28px; font-weight:bold; }
+
+  #bingo-title {
+    margin-top:20px;
+    font-size:32px;
+    color:#fff;
+  }
+
+  #bingo-date {
+    margin-top:10px;
+    font-size:20px;
+    color:#ffd700;
+  }
+
+  #bingo-code {
+    margin-top:20px;
+    font-size:40px;
+    letter-spacing:12px;
+    color:#00ffea;
+  }
+
+  .table-container {
+    margin-top:25px;
+    width:90%;
+    max-width:480px;
+    height:420px;
+    overflow-y:auto;
+    border:1px solid #ffd700;
+    border-radius:10px;
+    background:#111;
+    padding:10px;
+    box-sizing:border-box;
+  }
+
+  table {
+    width:100%;
+    border-collapse:collapse;
+    color:#ffd700;
+    font-size:16px;
+  }
+
+  th {
+    background:#222;
+    padding:10px;
+    border-bottom:1px solid #ffd700;
+  }
+
+  td {
+    padding:8px;
+    border-bottom:1px solid #333;
+  }
+
+  .wallet {
+    color:#00ffea;
+  }
+
+  .pct {
+    color:#ff6b00;
+    font-weight:bold;
+  }
+
+  .icon-row {
+    position:fixed;
+    bottom:10px;
+    left:0;
+    width:100%;
+    display:flex;
+    justify-content:center;
+    gap:40px;
+  }
+
+  .icon-item {
+    font-size:26px;
+    opacity:0.9;
+    cursor:pointer;
+  }
+</style>
+</head>
+
+<body>
+
+<script>
+const { createClient } = supabase;
+
+const supabaseClient = createClient(
+  "https://xqtegtfaowplgyanpjsa.supabase.co",
+  "sb_publishable_mBzrAtBTUaUBcXsGpGzB9Q_93NnWOZG"
+);
+
+// READ bingoCode + pct_7_new from spinwheel.html
+const bingoCode = localStorage.getItem("lastBingoCode") || "--";
+const spinDate = localStorage.getItem("lastSpinDate") || "";
+const pct7_new = Number(localStorage.getItem("pct7_new") || 0).toFixed(4);
+
+// Display header info
+document.addEventListener("DOMContentLoaded", () => {
+  document.getElementById("bingo-code").textContent = bingoCode;
+  document.getElementById("bingo-date").textContent = "Date: " + spinDate;
+
+  loadTable();
+});
+
+async function loadTable() {
+  const { data: rows, error } = await supabaseClient
+    .from("BingoSQL")
+    .select("crypto_wallet_id, pct_7");
+
+  if (error || !rows) {
+    document.getElementById("table-body").innerHTML =
+      "<tr><td colspan='3'>ERROR reading BingoSQL</td></tr>";
+    return;
+  }
+
+  const leftMatches = rows.filter(r =>
+    r.crypto_wallet_id[0] === bingoCode[0] &&
+    r.crypto_wallet_id[1] === bingoCode[1] &&
+    r.crypto_wallet_id[2] === bingoCode[2] &&
+    r.crypto_wallet_id[3] === bingoCode[3] &&
+    r.crypto_wallet_id[4] === bingoCode[4] &&
+    r.crypto_wallet_id[5] === bingoCode[5]
+  );
+
+  const rightMatches = rows.filter(r => {
+    const len = r.crypto_wallet_id.length;
+    return (
+      r.crypto_wallet_id[len - 1] === bingoCode[0] &&
+      r.crypto_wallet_id[len - 2] === bingoCode[1] &&
+      r.crypto_wallet_id[len - 3] === bingoCode[2] &&
+      r.crypto_wallet_id[len - 4] === bingoCode[3] &&
+      r.crypto_wallet_id[len - 5] === bingoCode[4] &&
+      r.crypto_wallet_id[len - 6] === bingoCode[5]
+    );
+  });
+
+  const allRows = [...leftMatches, ...rightMatches];
+
+  let html = "";
+
+  allRows.forEach(r => {
+    const full = r.crypto_wallet_id;
+    const first6 = full.substring(0, 6);
+    const last6 = full.substring(full.length - 6);
+
+    html += `
+      <tr>
+        <td class="wallet">${first6} ... ${last6}</td>
+        <td class="pct">${pct7_new}</td>
+      </tr>
+    `;
+  });
+
+  document.getElementById("table-body").innerHTML = html;
+}
+</script>
+
+<div class="logo-row">
+  <div class="logo-icon">🎡</div>
+  <div class="logo-title">SPINWIN TOKEN</div>
+</div>
+
+<div id="bingo-title">Bingo Results</div>
+<div id="bingo-date">Date:</div>
+<div id="bingo-code">@ @ @ @ @ @</div>
+
+<div class="table-container">
+  <table>
+    <thead>
+      <tr>
+        <th>crypto_wallet_id</th>
+        <th>pct_7_new</th>
+      </tr>
+    </thead>
+    <tbody id="table-body"></tbody>
+  </table>
+</div>
+
+<div class="icon-row">
+  <div class="icon-item" onclick="location.href='home.html'">🏠</div>
+  <div class="icon-item" onclick="location.href='token.html'">🏅</div>
+  <div class="icon-item" onclick="location.href='eligible.html'">📜</div>
+  <div class="icon-item" onclick="location.href='spinwheel.html'">🎡</div>
+  <div class="icon-item" onclick="location.href='bingo.html'">🎯</div>
+  <div class="icon-item" onclick="location.href='profile.html'">🧑</div>
+</div>
+
+</body>
+</html>
