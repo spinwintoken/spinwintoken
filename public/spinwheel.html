@@ -1186,7 +1186,7 @@ async function runSpinWheel() {
   if (seventh_count === 0) spinpool_remaining_percent += 0.07;
 
   const spinpool_remaining_value = baseSpinpool * spinpool_remaining_percent;
-  const reset_spinpooltoken = spinpool_remaining_value + 1250);
+  const reset_spinpooltoken = spinpool_remaining_value + 1250;
 
   document.getElementById("spinpooltoken").textContent = reset_spinpooltoken.toFixed(3);
   localStorage.setItem("spinpooltokenValue", reset_spinpooltoken.toFixed(3));
