@@ -1169,6 +1169,30 @@ async function runSpinWheel() {
     "pct_7 after RIGHT add_14: " + pct7_after_right.toFixed(4) + "<br>" +
     "pct_7 final DB_data: " + pct7_final.toFixed(4) + "<br><br>";
 
+  /* -------------------- RESET SPINPOOLTOKEN (4 decimals) -------------------- */
+
+let spinpool_remaining_percent = 0.30; // 30%
+
+if (first_count === 0)   spinpool_remaining_percent += 0.03;
+if (second_count === 0)  spinpool_remaining_percent += 0.06;
+if (third_count === 0)   spinpool_remaining_percent += 0.09;
+if (fourth_count === 0)  spinpool_remaining_percent += 0.12;
+if (fifth_count === 0)   spinpool_remaining_percent += 0.15;
+if (sixth_count === 0)   spinpool_remaining_percent += 0.18;
+if (seventh_count === 0) spinpool_remaining_percent += 0.07;
+
+const spinpool_remaining_value = Number((baseSpinpool * spinpool_remaining_percent).toFixed(4));
+const reset_spinpooltoken = Number((spinpool_remaining_value + 1250).toFixed(4));
+
+document.getElementById("spinpooltoken").textContent = reset_spinpooltoken.toFixed(4);
+localStorage.setItem("spinpooltokenValue", reset_spinpooltoken.toFixed(4));
+
+document.getElementById("bingoSQL_display").innerHTML =
+  "SpinPoolToken base: " + baseSpinpool.toFixed(4) + "<br>" +
+  "SpinPool remaining percent: " + (spinpool_remaining_percent * 100).toFixed(4) + "%<br>" +
+  "SpinPool remaining value: " + spinpool_remaining_value.toFixed(4) + "<br>" +
+  "Reset SpinPoolToken (next base): " + reset_spinpooltoken.toFixed(4);
+
   spinning = false;
   pauseTimer = false;
 }
