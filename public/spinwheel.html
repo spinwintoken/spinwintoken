@@ -1207,47 +1207,46 @@ document.getElementById("bingo-extra").innerHTML +=
   "pct_7 after RIGHT add_14: " + pct7_after_right.toFixed(3) + "<br>" +
   "pct_7 final DB_data: " + pct7_final.toFixed(3) + "<br><br>";
 
-/* ⭐ RESET SPINPOOLTOKEN LOGIC USING CURRENT BASE ⭐ */
+/* ⭐ RESET SPINPOOLTOKEN LOGIC (FINAL TRUE VERSION) ⭐ */
 
+const base = Number(document.getElementById("spinpooltoken").textContent);
+
+/* Calculate all percents from CURRENT base */
+const percent_3  = base * 0.03;
+const percent_6  = base * 0.06;
+const percent_9  = base * 0.09;
+const percent_12 = base * 0.12;
+const percent_15 = base * 0.15;
+const percent_18 = base * 0.18;
+const percent_7  = base * 0.07;
+
+/* Sum used percents */
 let usedPercent = 0;
 
-/* Add percent_3 only if first_count ≠ 0 */
-if (first_count !== 0) usedPercent += percent_3;
-
-/* Add percent_6 only if second_count ≠ 0 */
-if (second_count !== 0) usedPercent += percent_6;
-
-/* Add percent_9 only if third_count ≠ 0 */
-if (third_count !== 0) usedPercent += percent_9;
-
-/* Add percent_12 only if fourth_count ≠ 0 */
-if (fourth_count !== 0) usedPercent += percent_12;
-
-/* Add percent_15 only if fifth_count ≠ 0 */
-if (fifth_count !== 0) usedPercent += percent_15;
-
-/* Add percent_18 only if sixth_count ≠ 0 */
-if (sixth_count !== 0) usedPercent += percent_18;
-
-/* Add percent_7 only if seventh_count ≠ 0 */
+if (first_count   !== 0) usedPercent += percent_3;
+if (second_count  !== 0) usedPercent += percent_6;
+if (third_count   !== 0) usedPercent += percent_9;
+if (fourth_count  !== 0) usedPercent += percent_12;
+if (fifth_count   !== 0) usedPercent += percent_15;
+if (sixth_count   !== 0) usedPercent += percent_18;
 if (seventh_count !== 0) usedPercent += percent_7;
 
-/* All possible percent (3+6+9+12+15+18+7 = 70%) */
-const totalAllPercent = base * 0.70;
+/* Total possible percent = 70% of base */
+const totalPercent = base * 0.70;
 
-/* Remaining spinpooltoken (30% + any part not used from used block) */
-const remaining = base - usedPercent;
+/* Percent not used */
+const unusedPercent = totalPercent - usedPercent;
 
-/* Percent not used at all (from the 70%) */
-const unusedPercent = totalAllPercent - usedPercent;
+/* Remaining percent = 30% + unusedPercent/base */
+const remainingPercent = 0.30 + (unusedPercent / base);
 
-/* Final reset spinpooltoken = base + remaining + unusedPercent */
-const reset_spinpooltoken = base + remaining + unusedPercent;
+/* Reset spinpooltoken */
+const reset_spinpooltoken = base + (base * remainingPercent);
 
-/* Display reset spinpooltoken in the main token box */
+/* Display reset spinpooltoken */
 document.getElementById("spinpooltoken").textContent = reset_spinpooltoken;
 
-/* Display reset spinpooltoken BELOW the Date */
+/* Display below Date */
 document.getElementById("bingo-date").innerHTML +=
   "<br>Reset SpinPoolToken: " + reset_spinpooltoken;
 
