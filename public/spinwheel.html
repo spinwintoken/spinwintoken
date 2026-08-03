@@ -1234,16 +1234,10 @@ async function loadSpinSQL() {
   globalNextSpinTime = new Date(data.next_spin_time); // UTC timestamptz
   timerLoaded = true;
 
-  // SYNC localStorage with SpinSQL
-  const dbToken = Number(data.reset_spinpooltoken).toFixed(3);
-  document.getElementById("spinpooltoken").textContent = dbToken;
-  localStorage.setItem("spinpooltokenValue", dbToken);
-
   // Also sync displayed token with DB reset_spinpooltoken
-if (data.reset_spinpooltoken !== null && data.reset_spinpooltoken !== undefined) {
-  document.getElementById("spinpooltoken").textContent =
-    Number(data.reset_spinpooltoken).toFixed(3);
-
+  if (data.reset_spinpooltoken !== null && data.reset_spinpooltoken !== undefined) {
+    document.getElementById("spinpooltoken").textContent =
+      Number(data.reset_spinpooltoken).toFixed(3);
   }
 }
 
@@ -1283,3 +1277,4 @@ updateTimer();
 
 </body>
 </html>
+
