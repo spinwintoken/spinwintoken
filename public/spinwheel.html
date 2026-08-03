@@ -265,22 +265,26 @@ let timerLoaded = false;
 
 async function loadSpinSQL() {
   const { data, error } = await supabaseClient
-    .from("SpinSQL")
+    .from("public.SpinSQL")
     .select("next_spin_time, reset_spinpooltoken")
     .eq("id", 1)
-    .single();
+    .limit(1);
 
-  if (error || !data) {
+  console.log("SpinSQL data:", data, "error:", error);
+
+  if (error || !data || data.length === 0) {
     document.getElementById("timer").textContent = "Timer load error";
     return;
   }
 
+  const row = data[0];
+
   /* SpinSQL ALWAYS overrides localStorage */
-  const dbToken = Number(data.reset_spinpooltoken).toFixed(3);
+  const dbToken = Number(row.reset_spinpooltoken).toFixed(3);
   document.getElementById("spinpooltoken").textContent = dbToken;
   localStorage.setItem("spinpooltokenValue", dbToken);
 
-  globalNextSpinTime = new Date(data.next_spin_time);
+  globalNextSpinTime = new Date(row.next_spin_time);
   timerLoaded = true;
 }
 
