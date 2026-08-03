@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>SpinWinTimer</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+  body {
+    background:#000;
+    color:#ffd700;
+    font-family:Arial, sans-serif;
+    margin:0;
+    padding:0;
+    text-align:center;
+  }
+
+  .box {
+    margin-top:40px;
+    padding:20px;
+    background:#111;
+    border:1px solid #ffd700;
+    border-radius:10px;
+    width:90%;
+    max-width:420px;
+    margin-left:auto;
+    margin-right:auto;
+  }
+
+  .title {
+    font-size:24px;
+    font-weight:bold;
+  }
+
+  .timer {
+    font-size:36px;
+    margin-top:10px;
+  }
+
+  .token {
+    font-size:32px;
+    margin-top:20px;
+  }
+</style>
+</head>
+
+<body>
+
+<script>
+const { createClient } = supabase;
+
+const supabaseClient = createClient(
+  "https://xqtegtfaowplgyanpjsa.supabase.co",
+  "sb_publishable_mBzrAtBTUaUBcXsGpGzB9Q_93NnWOZG"
+);
+</script>
+
+<div class="box">
+  <div class="title">Next Spin Starts In</div>
+  <div id="timer" class="timer">Loading...</div>
+</div>
+
+<div class="box">
+  <div class="title">SpinPoolToken</div>
+  <div id="spinpooltoken" class="token">0.0000</div>
+</div>
+
+<script>
+/* -------------------- SpinSQL ONLY -------------------- */
+
+let globalNextSpinTime = null;
+let timerLoaded = false;
+
+async function loadSpinSQL() {
+  const { data, error } = await supabaseClient
+    .from("public.SpinSQL")
+    .select("next_spin_time, reset_spinpooltoken")
+    .eq("id", 1)
+    .limit(1);
+
+  console.log("SpinSQL data:", data, "error:", error);
+
+  if (error || !data || data.length === 0) {
+    document.getElementById("timer").textContent = "Timer load error";
+    return;
+  }
+
+  const row = data[0];
+
+  /* SpinSQL ALWAYS correct */
+  const dbToken = Number(row.reset_spinpooltoken).toFixed(4);
+  document.getElementById("spinpooltoken").textContent = dbToken;
+
+  globalNextSpinTime = new Date(row.next_spin_time);
+  timerLoaded = true;
+}
+
+/* -------------------- TIMER -------------------- */
+
+async function updateTimer() {
+  if (!timerLoaded) {
+    await loadSpinSQL();
+    if (!timerLoaded) return;
+  }
+
+  const nowUTC = new Date();
+  const diff = globalNextSpinTime - nowUTC;
+
+  if (diff <= 0) {
+    document.getElementById("timer").textContent = "0m 0s";
+    return;
+  }
+
+  const minutes = Math.floor(diff / 60000);
+  const seconds = Math.floor((diff % 60000) / 1000);
+
+  document.getElementById("timer").textContent =
+    `${minutes}m ${seconds}s`;
+}
+
+setInterval(updateTimer, 1000);
+updateTimer();
+
+</script>
+
+</body>
+</html>
