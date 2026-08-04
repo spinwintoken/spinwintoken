@@ -161,7 +161,7 @@ const supabaseClient = createClient(
   "sb_publishable_mBzrAtBTUaUBcXsGpGzB9Q_93NnWOZG"
 );
 
-/* -------------------- TIMER VARIABLES (inserted) -------------------- */
+/* -------------------- TIMER VARIABLES (UTC LOGIC) -------------------- */
 let globalNextSpinTime = null;
 let timerLoaded = false;
 let currentRowId = 1;   // ALWAYS id = 1
@@ -187,7 +187,7 @@ let currentRowId = 1;   // ALWAYS id = 1
   <div class="half-box">
     <div class="icon-box">
       <div class="bingo-icon">🎯</div>
-      <div id="spinpooltoken" class="token-value">1250</div>
+      <div id="spinpooltoken" class="token-value">--</div>
       <div class="token-small">Token</div>
     </div>
   </div>
@@ -217,36 +217,206 @@ let currentRowId = 1;   // ALWAYS id = 1
 
 <script>
 
-  
-/* TIMER */
+    /* -------------------- BINGO SQL READ + 3% + 6% LOGIC -------------------- */
 
-function updateTimer() {
-  if (pauseTimer) return;
+  const { data: rows, error } = await supabaseClient
+    .from("BingoSQL")
+    .select("id, crypto_wallet_id, pct_3, pct_6, pct_9, pct_12, pct_15, pct_18, pct_7");
 
-  const now = new Date();
-
-  if (!window.testTargetTime) {
-    window.testTargetTime = new Date(now.getTime() + (5 * 60 * 1000));
+  if (error || !rows) {
+    document.getElementById("bingoSQL_display").innerHTML =
+      "ERROR reading BingoSQL.";
+    spinning = false;
+    pauseTimer = false;
+    return;
   }
 
-  const diff = window.testTargetTime - now;
+  let matchedRow = null;
 
-  const minutes = Math.floor((diff / (1000 * 60)) % 60);
-  const seconds = Math.floor((diff / 1000) % 60);
+  for (const row of rows) {
+    if (row.crypto_wallet_id === matchChar) {
+      matchedRow = row;
+      break;
+    }
+  }
+
+  if (!matchedRow) {
+    document.getElementById("bingoSQL_display").innerHTML =
+      "No matching crypto_wallet_id.";
+    spinning = false;
+    pauseTimer = false;
+    return;
+  }
+
+  /* 3% + 6% logic */
+  const pct3  = Number(matchedRow.pct_3);
+  const pct6  = Number(matchedRow.pct_6);
+
+  const pct3_calc = percent_3.toFixed(4);
+  const pct6_calc = percent_6.toFixed(4);
+
+  document.getElementById("bingoSQL_display").innerHTML =
+    `3%: ${pct3_calc}<br>6%: ${pct6_calc}`;
+
+  spinning = false;
+  pauseTimer = false;
+}
+  /* -------------------- BINGO SQL READ + 3% + 6% LOGIC -------------------- */
+
+  const { data: rows, error } = await supabaseClient
+    .from("BingoSQL")
+    .select("id, crypto_wallet_id, pct_3, pct_6, pct_9, pct_12, pct_15, pct_18, pct_7");
+
+  if (error || !rows) {
+    document.getElementById("bingoSQL_display").innerHTML =
+      "ERROR reading BingoSQL.";
+    spinning = false;
+    pauseTimer = false;
+    return;
+  }
+
+  let matchedRow = null;
+
+  for (const row of rows) {
+    if (row.crypto_wallet_id === matchChar) {
+      matchedRow = row;
+      break;
+    }
+  }
+
+  if (!matchedRow) {
+    document.getElementById("bingoSQL_display").innerHTML =
+      "No matching crypto_wallet_id.";
+    spinning = false;
+    pauseTimer = false;
+    return;
+  }
+
+  /* 3% + 6% logic */
+  const pct3  = Number(matchedRow.pct_3);
+  const pct6  = Number(matchedRow.pct_6);
+
+  const pct3_calc = percent_3.toFixed(4);
+  const pct6_calc = percent_6.toFixed(4);
+
+  document.getElementById("bingoSQL_display").innerHTML =
+    `3%: ${pct3_calc}<br>6%: ${pct6_calc}`;
+
+  spinning = false;
+  pauseTimer = false;
+}
+
+  /* -------------------- 9% + 12% + 15% LOGIC -------------------- */
+
+const pct9  = Number(matchedRow.pct_9);
+const pct12 = Number(matchedRow.pct_12);
+const pct15 = Number(matchedRow.pct_15);
+
+const pct9_calc  = percent_9.toFixed(4);
+const pct12_calc = percent_12.toFixed(4);
+const pct15_calc = percent_15.toFixed(4);
+
+document.getElementById("bingoSQL_display").innerHTML +=
+  `<br>9%: ${pct9_calc}<br>12%: ${pct12_calc}<br>15%: ${pct15_calc}`;
+
+  /* -------------------- 18% + 7% LOGIC -------------------- */
+
+const pct18 = Number(matchedRow.pct_18);
+const pct7  = Number(matchedRow.pct_7);
+
+const pct18_calc = percent_18.toFixed(4);
+const pct7_calc  = percent_7.toFixed(4);
+
+document.getElementById("bingoSQL_display").innerHTML +=
+  `<br>18%: ${pct18_calc}<br>7%: ${pct7_calc}`;
+
+/* -------------------- UPDATE reset_spinpooltoken IN SpinSQL -------------------- */
+
+const newResetToken = pct7_calc;  // 7% result becomes new reset_spinpooltoken
+
+await supabaseClient
+  .from("SpinSQL")
+  .update({
+    reset_spinpooltoken: newResetToken
+  })
+  .eq("id", currentRowId);
+
+/* -------------------- UPDATE TOKEN DISPLAY (4 DECIMALS) -------------------- */
+
+document.getElementById("spinpooltoken").textContent =
+  Number(newResetToken).toFixed(4);
+
+localStorage.setItem("spinpooltokenValue", Number(newResetToken).toFixed(4));
+
+/* -------------------- FULL UTC TIMER LOGIC -------------------- */
+
+async function loadSpinSQL() {
+  const { data, error } = await supabaseClient
+    .from("SpinSQL")
+    .select("id, next_spin_time, reset_spinpooltoken")
+    .eq("id", 1)              // ALWAYS id = 1
+    .single();
+
+  if (error || !data) {
+    document.getElementById("timer").textContent = "Timer load error";
+    return;
+  }
+
+  currentRowId = data.id;
+  globalNextSpinTime = new Date(data.next_spin_time);
+
+  const dbToken = Number(data.reset_spinpooltoken).toFixed(4);
+  document.getElementById("spinpooltoken").textContent = dbToken;
+
+  timerLoaded = true;
+}
+
+async function updateSpinSQLWithNewTime() {
+  const nowUTC = new Date();
+  const newTime = new Date(nowUTC.getTime() + 5 * 60000); // +5 minutes UTC
+
+  await supabaseClient
+    .from("SpinSQL")
+    .update({
+      next_spin_time: newTime.toISOString()
+    })
+    .eq("id", currentRowId);
+
+  globalNextSpinTime = newTime;
+  timerLoaded = true;
+}
+
+async function updateTimer() {
+  if (!timerLoaded) {
+    await loadSpinSQL();
+    if (!timerLoaded) return;
+  }
+
+  const nowUTC = new Date();
+  const diff = globalNextSpinTime - nowUTC;
+
+  if (diff <= 0) {
+    document.getElementById("timer").textContent = "0m 0s";
+
+    await updateSpinSQLWithNewTime();
+
+    timerLoaded = false;
+    await loadSpinSQL();
+    return;
+  }
+
+  const minutes = Math.floor(diff / 60000);
+  const seconds = Math.floor((diff % 60000) / 1000);
 
   document.getElementById("timer").textContent =
     `${minutes}m ${seconds}s`;
-
-  if (diff <= 1000) {
-    runSpinWheel();
-    window.testTargetTime = new Date(new Date().getTime() + (5 * 60 * 1000));
-  }
 }
 
 setInterval(updateTimer, 1000);
 updateTimer();
-
 </script>
 
 </body>
 </html>
+
+  
