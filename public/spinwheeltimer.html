@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>SPINWIN TIMER</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+<style>
+  body {
+    background:#000;
+    color:#ffd700;
+    font-family:Arial, sans-serif;
+    margin:0;
+    padding:0;
+    text-align:center;
+  }
+
+  .header {
+    font-size:32px;
+    font-weight:bold;
+    margin-top:20px;
+  }
+
+  .top-row {
+    display:flex;
+    justify-content:center;
+    gap:20px;
+    margin-top:20px;
+  }
+
+  .box {
+    background:#111;
+    border:1px solid #ffd700;
+    border-radius:10px;
+    padding:20px;
+    width:160px;
+  }
+
+  .title {
+    font-size:20px;
+    font-weight:bold;
+    margin-bottom:10px;
+  }
+
+  .value {
+    font-size:28px;
+    margin-top:10px;
+  }
+
+  .testmode {
+    margin-top:10px;
+    font-size:14px;
+    color:#ccc;
+  }
+
+  .wheel {
+    margin-top:30px;
+  }
+
+  .bingo {
+    margin-top:20px;
+    font-size:22px;
+    font-weight:bold;
+  }
+
+  .date {
+    margin-top:10px;
+    font-size:18px;
+  }
+
+  .nav {
+    position:fixed;
+    bottom:10px;
+    width:100%;
+    display:flex;
+    justify-content:center;
+    gap:25px;
+    font-size:28px;
+  }
+</style>
+</head>
+
+<body>
+
+<div class="header">🎡 SPINWIN TOKEN</div>
+
+<div class="top-row">
+  <div class="box">
+    <div class="title">Next Spin Starts In</div>
+    <div id="timer" class="value">Timer load</div>
+  </div>
+
+  <div class="box">
+    <div class="title">🎯</div>
+    <div id="token" class="value">1250 Token</div>
+  </div>
+</div>
+
+<div class="testmode">Test Mode: 5‑minute cycle (UTC)</div>
+
+<div class="wheel">
+  <!-- Your wheel image or canvas goes here -->
+  <img src="wheel.png" width="300" />
+</div>
+
+<div class="bingo">-- -- -- -- -- --<br>BINGO:</div>
+
+<div class="date">Date:</div>
+
+<div class="nav">
+  🏠 🏅 📜 🎡 🎯 🧑
+</div>
+
+</body>
+</html>
