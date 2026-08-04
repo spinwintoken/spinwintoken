@@ -2,8 +2,10 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<title>SPINWIN TIMER</title>
+<title>SpinWheelTimer</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
   body {
@@ -15,101 +17,138 @@
     text-align:center;
   }
 
-  .header {
-    font-size:32px;
-    font-weight:bold;
-    margin-top:20px;
-  }
-
-  .top-row {
-    display:flex;
-    justify-content:center;
-    gap:20px;
-    margin-top:20px;
-  }
-
   .box {
+    margin-top:40px;
+    padding:20px;
     background:#111;
     border:1px solid #ffd700;
     border-radius:10px;
-    padding:20px;
-    width:160px;
+    width:90%;
+    max-width:420px;
+    margin-left:auto;
+    margin-right:auto;
   }
 
   .title {
-    font-size:20px;
+    font-size:24px;
     font-weight:bold;
-    margin-bottom:10px;
   }
 
-  .value {
-    font-size:28px;
+  .timer {
+    font-size:36px;
     margin-top:10px;
   }
 
-  .testmode {
-    margin-top:10px;
-    font-size:14px;
-    color:#ccc;
-  }
-
-  .wheel {
-    margin-top:30px;
-  }
-
-  .bingo {
+  .token {
+    font-size:32px;
     margin-top:20px;
-    font-size:22px;
-    font-weight:bold;
-  }
-
-  .date {
-    margin-top:10px;
-    font-size:18px;
-  }
-
-  .nav {
-    position:fixed;
-    bottom:10px;
-    width:100%;
-    display:flex;
-    justify-content:center;
-    gap:25px;
-    font-size:28px;
   }
 </style>
 </head>
 
 <body>
 
-<div class="header">🎡 SPINWIN TOKEN</div>
+<script>
+const { createClient } = supabase;
 
-<div class="top-row">
-  <div class="box">
-    <div class="title">Next Spin Starts In</div>
-    <div id="timer" class="value">Timer load</div>
-  </div>
+const supabaseClient = createClient(
+  "https://xqtegtfaowplgyanpjsa.supabase.co",
+  "sb_publishable_mBzrAtBTUaUBcXsGpGzB9Q_93NnWOZG"
+);
+</script>
 
-  <div class="box">
-    <div class="title">🎯</div>
-    <div id="token" class="value">1250 Token</div>
-  </div>
+<div class="box">
+  <div class="title">Next Spin Starts In</div>
+  <div id="timer" class="timer">Loading...</div>
 </div>
 
-<div class="testmode">Test Mode: 5‑minute cycle (UTC)</div>
-
-<div class="wheel">
-  <!-- Your wheel image or canvas goes here -->
-  <img src="wheel.png" width="300" />
+<div class="box">
+  <div class="title">SpinPoolToken</div>
+  <div id="spinpooltoken" class="token">0.0000</div>
 </div>
 
-<div class="bingo">-- -- -- -- -- --<br>BINGO:</div>
+<script>
+/* -------------------- SpinSQL AUTO-ROW -------------------- */
 
-<div class="date">Date:</div>
+let globalNextSpinTime = null;
+let timerLoaded = false;
+let currentRowId = null;
 
-<div class="nav">
-  🏠 🏅 📜 🎡 🎯 🧑
-</div>
+async function loadSpinSQL() {
+  const { data, error } = await supabaseClient
+    .from("SpinSQL")
+    .select("id, next_spin_time, reset_spinpooltoken")
+    .order("next_spin_time", { ascending: false })
+    .limit(1);
+
+  if (error || !data || data.length === 0) {
+    document.getElementById("timer").textContent = "Timer load error";
+    return;
+  }
+
+  const row = data[0];
+
+  currentRowId = row.id;
+  globalNextSpinTime = new Date(row.next_spin_time);
+
+  const dbToken = Number(row.reset_spinpooltoken).toFixed(4);
+  document.getElementById("spinpooltoken").textContent = dbToken;
+
+  timerLoaded = true;
+}
+
+/* -------------------- AUTO-UPDATE SPINSQL -------------------- */
+
+async function updateSpinSQLWithNewTime() {
+  const nowUTC = new Date();
+  const newTime = new Date(nowUTC.getTime() + 5 * 60000); // +5 minutes
+
+  await supabaseClient
+    .from("SpinSQL")
+    .update({
+      next_spin_time: newTime.toISOString()
+    })
+    .eq("id", currentRowId);
+
+  globalNextSpinTime = newTime;
+  timerLoaded = true;
+}
+
+/* -------------------- TIMER WITH AUTO-RELOAD + AUTO-UPDATE -------------------- */
+
+async function updateTimer() {
+  if (!timerLoaded) {
+    await loadSpinSQL();
+    if (!timerLoaded) return;
+  }
+
+  const nowUTC = new Date();
+  const diff = globalNextSpinTime - nowUTC;
+
+  if (diff <= 0) {
+    document.getElementById("timer").textContent = "0m 0s";
+
+    // ⭐ Auto-update SpinSQL with new future time
+    await updateSpinSQLWithNewTime();
+
+    // ⭐ Auto-reload newest SpinSQL row
+    timerLoaded = false;
+    await loadSpinSQL();
+    return;
+  }
+
+  const minutes = Math.floor(diff / 60000);
+  const seconds = Math.floor((diff % 60000) / 1000);
+
+  document.getElementById("timer").textContent =
+    `${minutes}m ${seconds}s`;
+}
+
+setInterval(updateTimer, 1000);
+updateTimer();
+
+</script>
 
 </body>
 </html>
+
