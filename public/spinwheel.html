@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<title>Spin Wheel - SpinWinToken</title>
+<title>Spin Wheel Timer</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -44,7 +44,8 @@
     display:flex;
   }
 
-  .countdown-box {
+  .countdown-box,
+  .icon-box {
     padding:20px;
     background:#111;
     border:1px solid #ffd700;
@@ -58,96 +59,9 @@
   .timer { font-size:32px; font-weight:bold; margin-top:10px; }
   .countdown-info { margin-top:10px; font-size:14px; }
 
-  .icon-box {
-    padding:20px;
-    background:#111;
-    border:1px solid #ffd700;
-    border-radius:10px;
-    width:100%;
-    height:100%;
-    box-sizing:border-box;
-    display:flex;
-    flex-direction:column;
-    justify-content:center;
-    align-items:center;
-  }
-
   .bingo-icon { font-size:50px; }
   .token-value { margin-top:10px; font-size:26px; font-weight:bold; }
   .token-small { font-size:12px; margin-top:2px; text-align:right; width:100%; color:#ffd700; }
-
-  .pointer {
-    width:0;
-    height:0;
-    border-left:20px solid transparent;
-    border-right:20px solid transparent;
-    border-top:30px solid red;
-    margin:0 auto;
-    margin-top:18px;
-  }
-
-  canvas {
-    margin-top:0px;
-    background:#111;
-    border:3px solid #ffd700;
-    border-radius:50%;
-  }
-
-  #spin-results {
-    margin-top:30px;
-    font-size:40px;
-    letter-spacing:12px;
-  }
-
-  #bingo-display {
-    margin-top:20px;
-    font-size:32px;
-    color:#fff;
-    text-align:center;
-  }
-
-  #bingo-date {
-    margin-top:10px;
-    font-size:20px;
-    color:#ffd700;
-    width:100%;
-    text-align:left;
-    padding-left:120px;
-  }
-
-  #bingo-extra {
-    font-size:18px;
-    color:#00ffea;
-    text-align:left;
-    padding-left:120px;
-    margin-top:10px;
-    line-height:26px;
-  }
-
-  #bingoSQL_display {
-    font-size:18px;
-    color:#00ffea;
-    text-align:left;
-    padding-left:120px;
-    margin-top:15px;
-    line-height:26px;
-  }
-
-  .icon-row {
-    position:fixed;
-    bottom:10px;
-    left:0;
-    width:100%;
-    display:flex;
-    justify-content:center;
-    gap:40px;
-  }
-
-  .icon-item {
-    font-size:26px;
-    opacity:0.9;
-    cursor:pointer;
-  }
 </style>
 </head>
 
@@ -161,14 +75,11 @@ const supabaseClient = createClient(
   "sb_publishable_mBzrAtBTUaUBcXsGpGzB9Q_93NnWOZG"
 );
 
-/* -------------------- TIMER VARIABLES (UTC LOGIC) -------------------- */
+/* -------------------- TIMER VARIABLES -------------------- */
 let globalNextSpinTime = null;
 let timerLoaded = false;
 let currentRowId = 1;   // ALWAYS id = 1
 </script>
-
-<audio id="spinSound"></audio>
-<audio id="winSound"></audio>
 
 <div class="logo-row">
   <div class="logo-icon">🎡</div>
@@ -187,174 +98,19 @@ let currentRowId = 1;   // ALWAYS id = 1
   <div class="half-box">
     <div class="icon-box">
       <div class="bingo-icon">🎯</div>
-      <div id="spinpooltoken" class="token-value">--</div>
+      <div id="spinpooltoken" class="token-value">0.0000</div>
       <div class="token-small">Token</div>
     </div>
   </div>
 </div>
 
-<div class="pointer"></div>
-
-<canvas id="wheel" width="320" height="320"></canvas>
-
-<div id="spin-results">-- -- -- -- -- --</div>
-
-<div id="bingo-display">BINGO:</div>
-<div id="bingo-date">Date:</div>
-
-<div id="bingo-extra"></div>
-
-<div id="bingoSQL_display"></div>
-
-<div class="icon-row">
-  <div class="icon-item" onclick="location.href='home.html'">🏠</div>
-  <div class="icon-item" onclick="location.href='token.html'">🏅</div>
-  <div class="icon-item" onclick="location.href='eligible.html'">📜</div>
-  <div class="icon-item" onclick="location.href='spinwheel.html'">🎡</div>
-  <div class="icon-item" onclick="location.href='bingo.html'">🎯</div>
-  <div class="icon-item" onclick="location.href='profile.html'">🧑</div>
-</div>
-
 <script>
-
-    /* -------------------- BINGO SQL READ + 3% + 6% LOGIC -------------------- */
-
-  const { data: rows, error } = await supabaseClient
-    .from("BingoSQL")
-    .select("id, crypto_wallet_id, pct_3, pct_6, pct_9, pct_12, pct_15, pct_18, pct_7");
-
-  if (error || !rows) {
-    document.getElementById("bingoSQL_display").innerHTML =
-      "ERROR reading BingoSQL.";
-    spinning = false;
-    pauseTimer = false;
-    return;
-  }
-
-  let matchedRow = null;
-
-  for (const row of rows) {
-    if (row.crypto_wallet_id === matchChar) {
-      matchedRow = row;
-      break;
-    }
-  }
-
-  if (!matchedRow) {
-    document.getElementById("bingoSQL_display").innerHTML =
-      "No matching crypto_wallet_id.";
-    spinning = false;
-    pauseTimer = false;
-    return;
-  }
-
-  /* 3% + 6% logic */
-  const pct3  = Number(matchedRow.pct_3);
-  const pct6  = Number(matchedRow.pct_6);
-
-  const pct3_calc = percent_3.toFixed(4);
-  const pct6_calc = percent_6.toFixed(4);
-
-  document.getElementById("bingoSQL_display").innerHTML =
-    `3%: ${pct3_calc}<br>6%: ${pct6_calc}`;
-
-  spinning = false;
-  pauseTimer = false;
-}
-  /* -------------------- BINGO SQL READ + 3% + 6% LOGIC -------------------- */
-
-  const { data: rows, error } = await supabaseClient
-    .from("BingoSQL")
-    .select("id, crypto_wallet_id, pct_3, pct_6, pct_9, pct_12, pct_15, pct_18, pct_7");
-
-  if (error || !rows) {
-    document.getElementById("bingoSQL_display").innerHTML =
-      "ERROR reading BingoSQL.";
-    spinning = false;
-    pauseTimer = false;
-    return;
-  }
-
-  let matchedRow = null;
-
-  for (const row of rows) {
-    if (row.crypto_wallet_id === matchChar) {
-      matchedRow = row;
-      break;
-    }
-  }
-
-  if (!matchedRow) {
-    document.getElementById("bingoSQL_display").innerHTML =
-      "No matching crypto_wallet_id.";
-    spinning = false;
-    pauseTimer = false;
-    return;
-  }
-
-  /* 3% + 6% logic */
-  const pct3  = Number(matchedRow.pct_3);
-  const pct6  = Number(matchedRow.pct_6);
-
-  const pct3_calc = percent_3.toFixed(4);
-  const pct6_calc = percent_6.toFixed(4);
-
-  document.getElementById("bingoSQL_display").innerHTML =
-    `3%: ${pct3_calc}<br>6%: ${pct6_calc}`;
-
-  spinning = false;
-  pauseTimer = false;
-}
-
-  /* -------------------- 9% + 12% + 15% LOGIC -------------------- */
-
-const pct9  = Number(matchedRow.pct_9);
-const pct12 = Number(matchedRow.pct_12);
-const pct15 = Number(matchedRow.pct_15);
-
-const pct9_calc  = percent_9.toFixed(4);
-const pct12_calc = percent_12.toFixed(4);
-const pct15_calc = percent_15.toFixed(4);
-
-document.getElementById("bingoSQL_display").innerHTML +=
-  `<br>9%: ${pct9_calc}<br>12%: ${pct12_calc}<br>15%: ${pct15_calc}`;
-
-  /* -------------------- 18% + 7% LOGIC -------------------- */
-
-const pct18 = Number(matchedRow.pct_18);
-const pct7  = Number(matchedRow.pct_7);
-
-const pct18_calc = percent_18.toFixed(4);
-const pct7_calc  = percent_7.toFixed(4);
-
-document.getElementById("bingoSQL_display").innerHTML +=
-  `<br>18%: ${pct18_calc}<br>7%: ${pct7_calc}`;
-
-/* -------------------- UPDATE reset_spinpooltoken IN SpinSQL -------------------- */
-
-const newResetToken = pct7_calc;  // 7% result becomes new reset_spinpooltoken
-
-await supabaseClient
-  .from("SpinSQL")
-  .update({
-    reset_spinpooltoken: newResetToken
-  })
-  .eq("id", currentRowId);
-
-/* -------------------- UPDATE TOKEN DISPLAY (4 DECIMALS) -------------------- */
-
-document.getElementById("spinpooltoken").textContent =
-  Number(newResetToken).toFixed(4);
-
-localStorage.setItem("spinpooltokenValue", Number(newResetToken).toFixed(4));
-
-/* -------------------- FULL UTC TIMER LOGIC -------------------- */
-
+/* -------------------- LOAD SpinSQL (UTC) -------------------- */
 async function loadSpinSQL() {
   const { data, error } = await supabaseClient
     .from("SpinSQL")
     .select("id, next_spin_time, reset_spinpooltoken")
-    .eq("id", 1)              // ALWAYS id = 1
+    .eq("id", 1)
     .single();
 
   if (error || !data) {
@@ -362,7 +118,6 @@ async function loadSpinSQL() {
     return;
   }
 
-  currentRowId = data.id;
   globalNextSpinTime = new Date(data.next_spin_time);
 
   const dbToken = Number(data.reset_spinpooltoken).toFixed(4);
@@ -371,21 +126,21 @@ async function loadSpinSQL() {
   timerLoaded = true;
 }
 
+/* -------------------- UPDATE next_spin_time (+5 min UTC) -------------------- */
 async function updateSpinSQLWithNewTime() {
   const nowUTC = new Date();
-  const newTime = new Date(nowUTC.getTime() + 5 * 60000); // +5 minutes UTC
+  const newTime = new Date(nowUTC.getTime() + 5 * 60000);
 
   await supabaseClient
     .from("SpinSQL")
-    .update({
-      next_spin_time: newTime.toISOString()
-    })
-    .eq("id", currentRowId);
+    .update({ next_spin_time: newTime.toISOString() })
+    .eq("id", 1);
 
   globalNextSpinTime = newTime;
   timerLoaded = true;
 }
 
+/* -------------------- MAIN UTC TIMER LOOP -------------------- */
 async function updateTimer() {
   if (!timerLoaded) {
     await loadSpinSQL();
@@ -399,7 +154,6 @@ async function updateTimer() {
     document.getElementById("timer").textContent = "0m 0s";
 
     await updateSpinSQLWithNewTime();
-
     timerLoaded = false;
     await loadSpinSQL();
     return;
@@ -418,5 +172,6 @@ updateTimer();
 
 </body>
 </html>
+
 
   
