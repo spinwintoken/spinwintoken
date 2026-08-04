@@ -68,16 +68,16 @@ const supabaseClient = createClient(
 </div>
 
 <script>
-/* -------------------- SpinSQL ONLY -------------------- */
+/* -------------------- SpinSQL AUTO-ROW -------------------- */
 
 let globalNextSpinTime = null;
 let timerLoaded = false;
 
 async function loadSpinSQL() {
   const { data, error } = await supabaseClient
-    .from("SpinSQL")   // ⭐ FIXED — correct table name
+    .from("SpinSQL")
     .select("next_spin_time, reset_spinpooltoken")
-    .eq("id", 1)
+    .order("next_spin_time", { ascending: false })   // ⭐ newest row
     .limit(1);
 
   console.log("SpinSQL data:", data, "error:", error);
@@ -89,7 +89,6 @@ async function loadSpinSQL() {
 
   const row = data[0];
 
-  /* SpinSQL ALWAYS correct */
   const dbToken = Number(row.reset_spinpooltoken).toFixed(4);
   document.getElementById("spinpooltoken").textContent = dbToken;
 
@@ -97,7 +96,7 @@ async function loadSpinSQL() {
   timerLoaded = true;
 }
 
-/* -------------------- TIMER -------------------- */
+/* -------------------- TIMER WITH AUTO-RELOAD -------------------- */
 
 async function updateTimer() {
   if (!timerLoaded) {
@@ -110,6 +109,10 @@ async function updateTimer() {
 
   if (diff <= 0) {
     document.getElementById("timer").textContent = "0m 0s";
+
+    // ⭐ Auto-reload newest SpinSQL row
+    timerLoaded = false;
+    await loadSpinSQL();
     return;
   }
 
