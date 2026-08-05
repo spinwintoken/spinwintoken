@@ -159,252 +159,6 @@ let timerLoaded = false;
 let currentRowId = null;
 let currentBingoCode = null;
 let currentResetToken = null;
-</script>
-
-<audio id="spinSound"></audio>
-<audio id="winSound"></audio>
-
-<div class="logo-row">
-  <div class="logo-icon">🎡</div>
-  <div class="logo-title">SPINWIN TOKEN</div>
-</div>
-
-<div class="top-row">
-  <div class="half-box">
-    <div class="countdown-box">
-      <div class="countdown-title">Next Spin Starts In</div>
-      <div id="timer" class="timer">Loading...</div>
-      <div class="countdown-info">Global Spin Schedule (UTC)</div>
-    </div>
-  </div>
-
-  <div class="half-box">
-    <div class="icon-box">
-      <div class="bingo-icon">🎯</div>
-      <div id="spinpooltoken" class="token-value">0.0000</div>
-      <div class="token-small">Token</div>
-    </div>
-  </div>
-</div>
-
-<div class="pointer"></div>
-
-<div class="wheel-center">
-  <canvas id="wheel" width="320" height="320"></canvas>
-</div>
-
-<div id="spin-results">-- -- -- -- -- --</div>
-
-<div id="bingo-display">BINGO:</div>
-<div id="bingo-date">Date:</div>
-
-<div id="bingo-extra"></div>
-
-<div id="bingoSQL_display"></div>
-
-<div class="icon-row">
-  <div class="icon-item" onclick="location.href='home.html'">🏠</div>
-  <div class="icon-item" onclick="location.href='token.html'">🏅</div>
-  <div class="icon-item" onclick="location.href='eligible.html'">📜</div>
-  <div class="icon-item" onclick="location.href='spinwheel.html'">🎡</div>
-  <div class="icon-item" onclick="location.href='bingo.html'">🎯</div>
-  <div class="icon-item" onclick="location.href='profile.html'">🧑</div>
-</div>
-
-<script>
-/* 62 SLOTS (for animation only) */
-const wheelSlots = [
-  ...Array.from({length:26}, (_,i)=>String.fromCharCode(65+i)),
-  ...Array.from({length:26}, (_,i)=>String.fromCharCode(97+i)),
-  ...Array.from({length:10}, (_,i)=>String(i))
-];
-
-let results = [];
-let spinning = false;
-let pauseTimer = false;
-
-/* RESTORE DATE + TOKEN (optional) */
-const savedToken = localStorage.getItem("spinpooltokenValue");
-if (savedToken) {
-  document.getElementById("spinpooltoken").textContent = savedToken;
-}
-
-const savedDate = localStorage.getItem("lastSpinDate");
-if (savedDate) {
-  document.getElementById("bingo-date").textContent = "Date: " + savedDate;
-}
-
-/* CANVAS */
-const canvas = document.getElementById("wheel");
-const ctx = canvas.getContext("2d");
-const radius = 160;
-
-/* DRAW WHEEL */
-function drawWheel(rotation=0) {
-  const slice = (2 * Math.PI) / wheelSlots.length;
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-  for (let i = 0; i < wheelSlots.length; i++) {
-    const start = i * slice + rotation;
-    const end = start + slice;
-
-    ctx.beginPath();
-    ctx.moveTo(radius, radius);
-    ctx.arc(radius, radius, radius, start, end);
-
-    ctx.fillStyle = i % 2 === 0 ? "#2a2a2a" : "#444";
-    ctx.fill();
-    ctx.strokeStyle = "#ffd700";
-    ctx.stroke();
-
-    ctx.save();
-    ctx.translate(radius, radius);
-    ctx.rotate(start + slice / 2);
-    ctx.textAlign = "right";
-    ctx.fillStyle = "#ffd700";
-    ctx.font = "14px Arial";
-    ctx.fillText(wheelSlots[i], radius - 10, 5);
-    ctx.restore();
-  }
-}
-
-drawWheel();
-
-/* FLASH */
-function flashSlice(index) {
-  const slice = (2 * Math.PI) / wheelSlots.length;
-  const start = index * slice;
-  const end = start + slice;
-
-  let flashOn = true;
-  let count = 0;
-
-  const flashInterval = setInterval(() => {
-    count++;
-
-    ctx.save();
-    ctx.beginPath();
-    ctx.moveTo(radius, radius);
-    ctx.arc(radius, radius, radius, start, end);
-
-    ctx.fillStyle = flashOn
-      ? "rgba(255, 215, 0, 0.55)"
-      : "rgba(255, 215, 0, 0.0)";
-    ctx.fill();
-
-    ctx.restore();
-    flashOn = !flashOn;
-
-    if (count >= 10) clearInterval(flashInterval);
-  }, 100);
-}
-
-/* ANIMATE SPIN TO SPECIFIC VALUE */
-function animateSpin(targetValue) {
-  return new Promise(resolve => {
-
-    const targetIndex = wheelSlots.indexOf(targetValue);
-    if (targetIndex === -1) {
-      resolve();
-      return;
-    }
-
-    const slice = (2 * Math.PI) / wheelSlots.length;
-
-    const fullRotations = 3 * 2 * Math.PI;
-    const targetAngle = fullRotations + (slice * targetIndex);
-
-    const duration = 3000;
-    const startTime = performance.now();
-
-    function frame(now) {
-      const elapsed = now - startTime;
-      const progress = Math.min(elapsed / duration, 1);
-
-      const angle = targetAngle * progress;
-
-      drawWheel(angle);
-
-      if (progress >= 1) {
-        flashSlice(targetIndex);
-        resolve();
-      } else {
-        requestAnimationFrame(frame);
-      }
-    }
-
-    requestAnimationFrame(frame);
-  });
-}
-
-/* DISPLAY RESULTS */
-function updateResultsDisplay() {
-  document.getElementById("spin-results").textContent =
-    results.join("   ");
-}
-
-/* UTC DATE FORMATTER */
-function formatUTCDate() {
-  const d = new Date();
-
-  const weekdays = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
-  const months   = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-
-  const weekday = weekdays[d.getUTCDay()];
-  const month   = months[d.getUTCMonth()];
-  const day     = String(d.getUTCDate()).padStart(2, "0");
-  const year    = d.getUTCFullYear();
-
-  const hour    = String(d.getUTCHours()).padStart(2, "0");
-  const minute  = String(d.getUTCMinutes()).padStart(2, "0");
-  const second  = String(d.getUTCSeconds()).padStart(2, "0");
-
-  return `${weekday} ${month} ${day} ${year} ${hour}:${minute}:${second} (UTC)`;
-}
-
-/* RUN SPIN USING GLOBAL bingo_code FROM SpinSQL */
-async function runSpinWheel() {
-  if (spinning) return;
-  spinning = true;
-  pauseTimer = true;
-
-  results = [];
-  updateResultsDisplay();
-
-  document.getElementById("bingo-display").textContent = "BINGO:";
-  document.getElementById("bingoSQL_display").innerHTML = "";
-  document.getElementById("bingo-extra").innerHTML = "";
-
-  if (!currentBingoCode || currentBingoCode.length < 6) {
-    document.getElementById("bingo-display").textContent = "BINGO: ERROR";
-    spinning = false;
-    pauseTimer = false;
-    return;
-  }
-
-  const chars = currentBingoCode.split("");
-
-  for (let i = 0; i < chars.length; i++) {
-    const value = chars[i];
-    await animateSpin(value);
-    results.push(value);
-    updateResultsDisplay();
-  }
-
-  const bingoCode = results.join("");
-  const spinDate = formatUTCDate();
-
-  localStorage.setItem("lastSpinDate", spinDate);
-  document.getElementById("bingo-date").textContent = "Date: " + spinDate;
-
-  document.getElementById("bingo-display").textContent =
-    "BINGO: " + bingoCode;
-
-  /* reset_token (reset_spinpooltoken) will be calculated and stored later */
-
-  spinning = false;
-  pauseTimer = false;
-}
 
 /* LOAD NEXT GLOBAL SPIN ROW FROM SpinSQL */
 async function loadSpinSQL() {
@@ -412,9 +166,9 @@ async function loadSpinSQL() {
 
   const { data, error } = await supabaseClient
     .from("SpinSQL")
-    .select("id, spin_time, bingo_code, reset_token")
-    .gt("spin_time", nowUTC)
-    .order("spin_time", { ascending: true })
+    .select("id, next_spin_time, bingo_code, reset_token")
+    .gt("next_spin_time", nowUTC)
+    .order("next_spin_time", { ascending: true })
     .limit(1);
 
   if (error || !data || data.length === 0) {
@@ -426,7 +180,7 @@ async function loadSpinSQL() {
   const row = data[0];
 
   currentRowId = row.id;
-  globalNextSpinTime = new Date(row.spin_time);
+  globalNextSpinTime = new Date(row.next_spin_time);
   currentBingoCode = row.bingo_code;
   currentResetToken = row.reset_token;
 
@@ -453,7 +207,6 @@ async function updateTimer() {
 
     await runSpinWheel();
 
-    /* move to next row for next cycle */
     timerLoaded = false;
     await loadSpinSQL();
 
