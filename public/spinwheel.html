@@ -73,13 +73,8 @@
     margin-top:18px;
   }
 
-  .wheel-center {
-    display:flex;
-    justify-content:center;
-    margin-top:10px;
-  }
-
   canvas {
+    margin-top:0px;
     background:#111;
     border:3px solid #ffd700;
     border-radius:50%;
@@ -153,46 +148,365 @@ const supabaseClient = createClient(
   "sb_publishable_mBzrAtBTUaUBcXsGpGzB9Q_93NnWOZG"
 );
 
-/* GLOBAL SPIN ROW VARIABLES */
+/* TIMER VARIABLES (UTC) */
 let globalNextSpinTime = null;
 let timerLoaded = false;
-let currentRowId = null;
-let currentBingoCode = null;
-let currentResetToken = null;
+let currentRowId = 1;   // ALWAYS id = 1
+</script>
 
-/* LOAD NEXT GLOBAL SPIN ROW FROM SpinSQL */
-async function loadSpinSQL() {
-  const nowUTC = new Date().toISOString();
+<audio id="spinSound"></audio>
+<audio id="winSound"></audio>
 
-  const { data, error } = await supabaseClient
-    .from("SpinSQL")
-    .select("id, next_spin_time, bingo_code, reset_token")
-    .gt("next_spin_time", nowUTC)
-    .order("next_spin_time", { ascending: true })
-    .limit(1);
+<div class="logo-row">
+  <div class="logo-icon">🎡</div>
+  <div class="logo-title">SPINWIN TOKEN</div>
+</div>
 
-  if (error || !data || data.length === 0) {
-    document.getElementById("timer").textContent = "No more spins";
-    timerLoaded = false;
+<div class="top-row">
+  <div class="half-box">
+    <div class="countdown-box">
+      <div class="countdown-title">Next Spin Starts In</div>
+      <div id="timer" class="timer">Loading...</div>
+      <div class="countdown-info">Test Mode: 5‑minute cycle (UTC)</div>
+    </div>
+  </div>
+
+  <div class="half-box">
+    <div class="icon-box">
+      <div class="bingo-icon">🎯</div>
+      <div id="spinpooltoken" class="token-value">0.0000</div>
+      <div class="token-small">Token</div>
+    </div>
+  </div>
+</div>
+
+<div class="pointer"></div>
+
+<canvas id="wheel" width="320" height="320"></canvas>
+
+<button onclick="runSpinWheel()" 
+style="margin-top:20px; padding:12px 30px; font-size:20px; background:#ffd700; border:none; border-radius:8px; cursor:pointer;">
+  SPIN
+</button>
+
+<div id="spin-results">-- -- -- -- -- --</div>
+
+<div id="bingo-display">BINGO:</div>
+<div id="bingo-date">Date:</div>
+
+<div id="bingo-extra"></div>
+
+<div id="bingoSQL_display"></div>
+
+<div class="icon-row">
+  <div class="icon-item" onclick="location.href='home.html'">🏠</div>
+  <div class="icon-item" onclick="location.href='token.html'">🏅</div>
+  <div class="icon-item" onclick="location.href='eligible.html'">📜</div>
+  <div class="icon-item" onclick="location.href='spinwheel.html'">🎡</div>
+  <div class="icon-item" onclick="location.href='bingo.html'">🎯</div>
+  <div class="icon-item" onclick="location.href='profile.html'">🧑</div>
+</div>
+
+<script>
+/* WHEEL SLOTS */
+const wheelSlots = [
+  ...Array.from({length:26}, (_,i)=>String.fromCharCode(65+i)),
+  ...Array.from({length:26}, (_,i)=>String.fromCharCode(97+i)),
+  ...Array.from({length:10}, (_,i)=>String(i))
+];
+
+let spinPool = [...wheelSlots];
+let results = [];
+let spinning = false;
+let pauseTimer = false;
+
+/* RESTORE DATE + TOKEN ON REFRESH */
+const savedToken = localStorage.getItem("spinpooltokenValue");
+if (savedToken) {
+  document.getElementById("spinpooltoken").textContent = savedToken;
+}
+
+const savedDate = localStorage.getItem("lastSpinDate");
+if (savedDate) {
+  document.getElementById("bingo-date").textContent = "Date: " + savedDate;
+}
+
+/* CANVAS */
+const canvas = document.getElementById("wheel");
+const ctx = canvas.getContext("2d");
+const radius = 160;
+
+/* DRAW WHEEL */
+function drawWheel(rotation=0) {
+  const slice = (2 * Math.PI) / wheelSlots.length;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  for (let i = 0; i < wheelSlots.length; i++) {
+    const start = i * slice + rotation;
+    const end = start + slice;
+
+    ctx.beginPath();
+    ctx.moveTo(radius, radius);
+    ctx.arc(radius, radius, radius, start, end);
+
+    ctx.fillStyle = i % 2 === 0 ? "#2a2a2a" : "#444";
+    ctx.fill();
+    ctx.strokeStyle = "#ffd700";
+    ctx.stroke();
+
+    ctx.save();
+    ctx.translate(radius, radius);
+    ctx.rotate(start + slice / 2);
+    ctx.textAlign = "right";
+    ctx.fillStyle = "#ffd700";
+    ctx.font = "14px Arial";
+    ctx.fillText(wheelSlots[i], radius - 10, 5);
+    ctx.restore();
+  }
+}
+
+drawWheel();
+
+/* FLASH */
+function flashSlice(index) {
+  const slice = (2 * Math.PI) / wheelSlots.length;
+  const start = index * slice;
+  const end = start + slice;
+
+  let flashOn = true;
+  let count = 0;
+
+  const flashInterval = setInterval(() => {
+    count++;
+
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(radius, radius);
+    ctx.arc(radius, radius, radius, start, end);
+
+    ctx.fillStyle = flashOn
+      ? "rgba(255, 215, 0, 0.55)"
+      : "rgba(255, 215, 0, 0.0)";
+    ctx.fill();
+
+    ctx.restore();
+    flashOn = !flashOn;
+
+    if (count >= 10) clearInterval(flashInterval);
+  }, 100);
+}
+
+/* SPIN ONE */
+function spinOne() {
+  if (spinPool.length === 0) spinPool = [...wheelSlots];
+  const index = Math.floor(Math.random() * spinPool.length);
+  const value = spinPool[index];
+  spinPool.splice(index, 1);
+  return value;
+}
+
+/* ANIMATE SPIN */
+function animateSpin(targetValue) {
+  return new Promise(resolve => {
+
+    const targetIndex = wheelSlots.indexOf(targetValue);
+    const slice = (2 * Math.PI) / wheelSlots.length;
+
+    const fullRotations = 3 * 2 * Math.PI;
+    const targetAngle = fullRotations + (slice * targetIndex);
+
+    const duration = 3000;
+    const startTime = performance.now();
+
+    function frame(now) {
+      const elapsed = now - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+
+      const angle = targetAngle * progress;
+
+      drawWheel(angle);
+
+      if (progress >= 1) {
+        flashSlice(targetIndex);
+        resolve();
+      } else {
+        requestAnimationFrame(frame);
+      }
+    }
+
+    requestAnimationFrame(frame);
+  });
+}
+
+/* DISPLAY RESULTS */
+function updateResultsDisplay() {
+  document.getElementById("spin-results").textContent =
+    results.join("   ");
+}
+
+/* ⭐ UTC DATE FORMATTER */
+function formatUTCDate() {
+  const d = new Date();
+
+  const weekdays = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+  const months   = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+
+  const weekday = weekdays[d.getUTCDay()];
+  const month   = months[d.getUTCMonth()];
+  const day     = String(d.getUTCDate()).padStart(2, "0");
+  const year    = d.getUTCFullYear();
+
+  const hour    = String(d.getUTCHours()).padStart(2, "0");
+  const minute  = String(d.getUTCMinutes()).padStart(2, "0");
+  const second  = String(d.getUTCSeconds()).padStart(2, "0");
+
+  return `${weekday} ${month} ${day} ${year} ${hour}:${minute}:${second} (UTC)`;
+}
+
+/* RUN 6 SPINS + percent logic */
+async function runSpinWheel() {
+  if (spinning) return;
+  spinning = true;
+  pauseTimer = true;
+
+  results = [];
+  updateResultsDisplay();
+
+  document.getElementById("bingo-display").textContent = "BINGO:";
+  document.getElementById("bingoSQL_display").innerHTML = "";
+  document.getElementById("bingo-extra").innerHTML = "";
+
+  for (let i = 0; i < 6; i++) {
+    const value = spinOne();
+    await animateSpin(value);
+    results.unshift(value);
+    updateResultsDisplay();
+  }
+
+  const bingoCode = results.join("");
+  const matchChar = bingoCode[0];
+
+  /* ⭐ USE NEW UTC FORMAT */
+  const spinDate = formatUTCDate();
+  localStorage.setItem("lastSpinDate", spinDate);
+  document.getElementById("bingo-date").textContent = "Date: " + spinDate;
+
+  document.getElementById("bingo-display").textContent =
+    "BINGO: " + bingoCode;
+
+  /* ALWAYS use displayed spinpooltoken as base */
+  const baseSpinpool = Number(document.getElementById("spinpooltoken").textContent);
+
+  const percent_3  = baseSpinpool * 0.03;
+  const percent_6  = baseSpinpool * 0.06;
+  const percent_9  = baseSpinpool * 0.09;
+  const percent_12 = baseSpinpool * 0.12;
+  const percent_15 = baseSpinpool * 0.15;
+  const percent_18 = baseSpinpool * 0.18;
+  const percent_7  = baseSpinpool * 0.07;
+
+  const { data: rows, error } = await supabaseClient
+    .from("BingoSQL")
+    .select("id, crypto_wallet_id, pct_3, pct_6, pct_9, pct_12, pct_15, pct_18, pct_7");
+
+  if (error || !rows) {
+    document.getElementById("bingoSQL_display").innerHTML =
+      "ERROR reading BingoSQL.";
+    spinning = false;
+    pauseTimer = false;
     return;
   }
 
-  const row = data[0];
+  let matchedRow = null;
 
-  currentRowId = row.id;
-  globalNextSpinTime = new Date(row.next_spin_time);
-  currentBingoCode = row.bingo_code;
-  currentResetToken = row.reset_token;
-
-  if (currentResetToken != null) {
-    document.getElementById("spinpooltoken").textContent =
-      Number(currentResetToken).toFixed(4);
+  for (const row of rows) {
+    if (row.crypto_wallet_id === matchChar) {
+      matchedRow = row;
+      break;
+    }
   }
+
+  if (!matchedRow) {
+    document.getElementById("bingoSQL_display").innerHTML =
+      "No matching crypto_wallet_id.";
+    spinning = false;
+    pauseTimer = false;
+    return;
+  }
+
+  /* 3% + 6% */
+  const pct3_calc = percent_3.toFixed(4);
+  const pct6_calc = percent_6.toFixed(4);
+
+  document.getElementById("bingoSQL_display").innerHTML =
+    `3%: ${pct3_calc}<br>6%: ${pct6_calc}`;
+
+  /* 9% + 12% + 15% */
+  const pct9_calc  = percent_9.toFixed(4);
+  const pct12_calc = percent_12.toFixed(4);
+  const pct15_calc = percent_15.toFixed(4);
+
+  document.getElementById("bingoSQL_display").innerHTML +=
+    `<br>9%: ${pct9_calc}<br>12%: ${pct12_calc}<br>15%: ${pct15_calc}`;
+
+  /* 18% + 7% */
+  const pct18_calc = percent_18.toFixed(4);
+  const pct7_calc  = percent_7.toFixed(4);
+
+  document.getElementById("bingoSQL_display").innerHTML +=
+    `<br>18%: ${pct18_calc}<br>7%: ${pct7_calc}`;
+
+  /* UPDATE reset_spinpooltoken IN SpinSQL WITH 7% RESULT */
+  const newResetToken = pct7_calc;
+
+  await supabaseClient
+    .from("SpinSQL")
+    .update({ reset_spinpooltoken: newResetToken })
+    .eq("id", 1);
+
+  document.getElementById("spinpooltoken").textContent =
+    Number(newResetToken).toFixed(4);
+
+  localStorage.setItem("spinpooltokenValue", Number(newResetToken).toFixed(4));
+
+  spinning = false;
+  pauseTimer = false;
+}
+
+/* -------------------- UTC TIMER (SpinSQL) -------------------- */
+async function loadSpinSQL() {
+  const { data, error } = await supabaseClient
+    .from("SpinSQL")
+    .select("id, next_spin_time, reset_spinpooltoken")
+    .eq("id", 1)
+    .single();
+
+  if (error || !data) {
+    document.getElementById("timer").textContent = "Timer load error";
+    return;
+  }
+
+  globalNextSpinTime = new Date(data.next_spin_time);
+
+  const dbToken = Number(data.reset_spinpooltoken).toFixed(4);
+  document.getElementById("spinpooltoken").textContent = dbToken;
 
   timerLoaded = true;
 }
 
-/* TIMER USING GLOBAL ROWS (NO DB WRITES) */
+async function updateSpinSQLWithNewTime() {
+  const nowUTC = new Date();
+  const newTime = new Date(nowUTC.getTime() + 5 * 60000);
+
+  await supabaseClient
+    .from("SpinSQL")
+    .update({ next_spin_time: newTime.toISOString() })
+    .eq("id", 1);
+
+  globalNextSpinTime = newTime;
+  timerLoaded = true;
+}
+
 async function updateTimer() {
   if (!timerLoaded) {
     await loadSpinSQL();
@@ -205,11 +519,9 @@ async function updateTimer() {
   if (diff <= 0) {
     document.getElementById("timer").textContent = "0m 0s";
 
-    await runSpinWheel();
-
+    await updateSpinSQLWithNewTime();
     timerLoaded = false;
     await loadSpinSQL();
-
     return;
   }
 
