@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8" />
+<title>SpinWheel</title>
+
+<style>
+  body {
+    background: black;
+    color: #ffd700;
+    font-family: Arial;
+    text-align: center;
+    padding-bottom: 80px;
+  }
+
+  .logo-row {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 20px;
+    gap: 15px;
+  }
+  .logo-icon { font-size: 60px; }
+  .logo-title { font-size: 32px; font-weight: bold; }
+
+  /* RESTORED ORIGINAL BLOCK SIZE */
+  .top-row {
+    display: flex;
+    justify-content: center;
+    align-items: stretch;
+    gap: 10px;
+    width: 90%;
+    max-width: 420px;
+    margin: 20px auto 0 auto;
+  }
+
+  .half-box {
+    width: 50%;
+    display: flex;
+  }
+
+  .countdown-box {
+    padding: 20px;
+    background: #111;
+    border: 2px solid #ffd700;
+    border-radius: 10px;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .countdown-title { font-size: 22px; }
+  .timer { font-size: 36px; font-weight: bold; margin-top: 10px; }
+  .countdown-info { margin-top: 10px; font-size: 14px; }
+
+  .icon-box {
+    padding: 20px;
+    background: #111;
+    border: 2px solid #ffd700;
+    border-radius: 10px;
+    width: 100%;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .bingo-icon { font-size: 50px; }
+  .token-value { margin-top: 10px; font-size: 32px; font-weight: bold; }
+  .token-small { font-size: 12px; margin-top: 2px; width: 100%; text-align: right; }
+
+  .pointer {
+    width: 0;
+    height: 0;
+    border-left: 20px solid transparent;
+    border-right: 20px solid transparent;
+    border-bottom: 30px solid red;
+    margin: 20px auto;
+  }
+
+  canvas {
+    margin-top: 0px;
+    background: #111;
+    border: 3px solid #ffd700;
+    border-radius: 50%;
+  }
+
+  /* RESTORED BINGO + DATE DISPLAY */
+  #spin-results {
+    margin-top: 20px;
+    font-size: 40px;
+    letter-spacing: 12px;
+  }
+
+  #bingo-display {
+    margin-top: 20px;
+    font-size: 32px;
+    color: #fff;
+  }
+
+  #bingo-date {
+    margin-top: 10px;
+    font-size: 20px;
+    color: #ffd700;
+  }
+
+  .icon-row {
+    position: fixed;
+    bottom: 10px;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    gap: 40px;
+    font-size: 30px;
+  }
+</style>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+</head>
+
+<body>
+
+<div class="logo-row">
+  <div class="logo-icon">🎡</div>
+  <div class="logo-title">SPINWIN TOKEN</div>
+</div>
+
+<div class="top-row">
+  <div class="half-box">
+    <div class="countdown-box">
+      <div class="countdown-title">Next Spin Starts In</div>
+      <div id="timer" class="timer">Loading...</div>
+      <div class="countdown-info">Global Spin Schedule (UTC)</div>
+    </div>
+  </div>
+
+  <div class="half-box">
+    <div class="icon-box">
+      <div class="bingo-icon">🎯</div>
+      <div id="spinpooltoken" class="token-value">0.0000</div>
+      <div class="token-small">Token</div>
+    </div>
+  </div>
+</div>
+
+<div class="pointer"></div>
+
+<div class="wheel-center">
+  <canvas id="wheel" width="320" height="320"></canvas>
+</div>
+
+<div id="spin-results">__ __ __ __ __ __</div>
+
+<div id="bingo-display">BINGO:</div>
+<div id="bingo-date">Date:</div>
+
+<div class="icon-row">
