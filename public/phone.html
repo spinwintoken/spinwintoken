@@ -385,55 +385,6 @@ document.getElementById("bingo-date").textContent = "Date: " + spinDate;
 
 localStorage.setItem("lastSpinDate", spinDate);
 
-/* SAVE TO 70percentSQL */
-try {
-
-  /* ALWAYS use displayed spinpooltoken as base */
-  const baseSpinpool =
-    Number(document.getElementById("spinpooltoken").textContent);
-
-  const percent_3  = baseSpinpool * 0.03;
-  const percent_6  = baseSpinpool * 0.06;
-  const percent_9  = baseSpinpool * 0.09;
-  const percent_12 = baseSpinpool * 0.12;
-  const percent_15 = baseSpinpool * 0.15;
-  const percent_18 = baseSpinpool * 0.18;
-  const percent_7  = baseSpinpool * 0.07;
-
-  document.getElementById("percent-display").innerHTML =
-  `3%: ${percent_3.toFixed(4)}<br>
-   6%: ${percent_6.toFixed(4)}<br>
-   9%: ${percent_9.toFixed(4)}<br>
-   12%: ${percent_12.toFixed(4)}<br>
-   15%: ${percent_15.toFixed(4)}<br>
-   18%: ${percent_18.toFixed(4)}<br>
-   7%: ${percent_7.toFixed(4)}`;
-  
-  const { error } = await supabaseClient
-    .from("70percentSQL")
-    .insert([
-      {
-        spin_time: new Date().toISOString(),
-        bingo_6_char: bingoCode,
-
-        percent_3: Number(percent_3.toFixed(4)),
-        percent_6: Number(percent_6.toFixed(4)),
-        percent_9: Number(percent_9.toFixed(4)),
-        percent_12: Number(percent_12.toFixed(4)),
-        percent_15: Number(percent_15.toFixed(4)),
-        percent_18: Number(percent_18.toFixed(4)),
-        percent_7: Number(percent_7.toFixed(4))
-      }
-    ]);
-
-  if (error) {
-    console.error("70percentSQL insert error:", error);
-  }
-
-} catch (err) {
-  console.error("70percentSQL insert error:", err);
-}
-
 spinning = false;
 }
 
