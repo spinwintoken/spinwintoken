@@ -197,6 +197,7 @@
 
 <div id="bingo-display">BINGO:</div>
 <div id="bingo-date">Date:</div>
+<div id="percent-display"></div>
 
 <div class="icon-row">
   <div class="icon-item" onclick="location.href='home.html'">🏠</div>
@@ -399,6 +400,15 @@ try {
   const percent_18 = baseSpinpool * 0.18;
   const percent_7  = baseSpinpool * 0.07;
 
+  document.getElementById("percent-display").innerHTML =
+  `3%: ${percent_3.toFixed(4)}<br>
+   6%: ${percent_6.toFixed(4)}<br>
+   9%: ${percent_9.toFixed(4)}<br>
+   12%: ${percent_12.toFixed(4)}<br>
+   15%: ${percent_15.toFixed(4)}<br>
+   18%: ${percent_18.toFixed(4)}<br>
+   7%: ${percent_7.toFixed(4)}`;
+  
   const { error } = await supabaseClient
     .from("70percentSQL")
     .insert([
