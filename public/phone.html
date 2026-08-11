@@ -412,62 +412,6 @@ await supabaseClient
     percent_18: percent_18.toFixed(4),
     percent_7: percent_7.toFixed(4)
   });
-
-  /* -------------------- INSERT INTO 70pctCountSQL (every match = one row) -------------------- */
-
-function insertMatchRow(r) {
-
-  // Format wallet_id_left_right as: first 6 chars + "...." + last 6 chars
-  const left6  = r.crypto_wallet_id.slice(0, 6);
-  const right6 = r.crypto_wallet_id.slice(-6);
-  const formattedWallet = left6 + "...." + right6;
-
-  return supabaseClient
-    .from("70pctCountSQL")
-    .insert({
-      wallet_id_left_right: formattedWallet,
-      bingo_6_char: bingoCode,            // <-- NEW: links both tables
-      pct_3_new: pct_3.toFixed(4),
-      pct_6_new: pct_6_new.toFixed(4),
-      pct_9_new: pct_9_new.toFixed(4),
-      pct_12_new: pct_12_new.toFixed(4),
-      pct_15_new: pct_15_new.toFixed(4),
-      pct_18_new: pct_18_new.toFixed(4),
-      pct_7_new: pct_7_new.toFixed(4)
-    });
-}
-
-let allInserts = [];
-
-/* 3% */
-leftMatches.forEach(r => allInserts.push(insertMatchRow(r)));
-rightMatches.forEach(r => allInserts.push(insertMatchRow(r)));
-
-/* 6% */
-second_left_matches.forEach(r => allInserts.push(insertMatchRow(r)));
-second_right_matches.forEach(r => allInserts.push(insertMatchRow(r)));
-
-/* 9% */
-third_left_matches.forEach(r => allInserts.push(insertMatchRow(r)));
-third_right_matches.forEach(r => allInserts.push(insertMatchRow(r)));
-
-/* 12% */
-fourth_left_matches.forEach(r => allInserts.push(insertMatchRow(r)));
-fourth_right_matches.forEach(r => allInserts.push(insertMatchRow(r)));
-
-/* 15% */
-fifth_left_matches.forEach(r => allInserts.push(insertMatchRow(r)));
-fifth_right_matches.forEach(r => allInserts.push(insertMatchRow(r)));
-
-/* 18% */
-sixth_left_matches.forEach(r => allInserts.push(insertMatchRow(r)));
-sixth_right_matches.forEach(r => allInserts.push(insertMatchRow(r)));
-
-/* 7% (full 6-character match left & right) */
-seventh_left_matches.forEach(r => allInserts.push(insertMatchRow(r)));
-seventh_right_matches.forEach(r => allInserts.push(insertMatchRow(r)));
-
-await Promise.all(allInserts);
   
 spinning = false;
 }
