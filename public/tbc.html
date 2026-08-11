@@ -1,0 +1,163 @@
+spinwheel.html = perfect, don't change anything, don't change anything, ONLY ADD the logic
+shown in the plain text
+
+  const bingoCode = results.join("");
+  const spinDate = formatReadableUTC();
+
+document.getElementById("bingo-display").textContent = "BINGO: " + bingoCode;
+document.getElementById("bingo-date").textContent = "Date: " + spinDate;
+
+localStorage.setItem("lastSpinDate", spinDate);
+
+spinning = false;
+}
+
+</body>
+</html>
+
+can you read the details of the plain text?
+calculation for the coulums
+ add logic to
+ const bingoCode = results.join("");
+  const matchChar = bingoCode[0];
+
+  const spinDate = new Date().toString();
+  localStorage.setItem("lastSpinDate", spinDate);
+  document.getElementById("bingo-date").textContent = "Date: " + spinDate;
+
+  document.getElementById("bingo-display").textContent =
+    "BINGO: " + bingoCode;
+
+  /* ALWAYS use displayed spinpooltoken as base */
+  const baseSpinpool = Number(document.getElementById("spinpooltoken").textContent);
+
+  const percent_3  = baseSpinpool * 0.03;
+  const percent_6  = baseSpinpool * 0.06;
+  const percent_9  = baseSpinpool * 0.09;
+  const percent_12 = baseSpinpool * 0.12;
+  const percent_15 = baseSpinpool * 0.15;
+  const percent_18 = baseSpinpool * 0.18;
+  const percent_7  = baseSpinpool * 0.07;
+
+  const { data: rows, error } = await supabaseClient
+    .from("BingoSQL")
+    .select("id, crypto_wallet_id, pct_3, pct_6, pct_9, pct_12, pct_15, pct_18, pct_7");
+
+  if (error || !rows) {
+    document.getElementById("bingoSQL_display").innerHTML =
+      "ERROR reading BingoSQL.";
+    spinning = false;
+    pauseTimer = false;
+    return;
+  }
+
+  /* -------------------- 3% LOGIC -------------------- */
+
+  const leftMatches = rows.filter(r => r.crypto_wallet_id[0] === matchChar);
+  const rightMatches = rows.filter(r => {
+    const last = r.crypto_wallet_id[r.crypto_wallet_id.length - 1];
+    return last === matchChar;
+  });
+
+  const first_left_count = leftMatches.length;
+  const first_right_count = rightMatches.length;
+  const first_count = first_left_count + first_right_count;
+
+  let pct_3 = 0;
+  if (first_count !== 0) {
+    pct_3 = percent_3 / first_count;
+  }
+
+  let pct3_before = 0;
+  if (leftMatches.length > 0 || rightMatches.length > 0) {
+    const firstID = leftMatches.length > 0 ? leftMatches[0].id : rightMatches[0].id;
+    const { data: beforeData } = await supabaseClient
+      .from("BingoSQL")
+      .select("pct_3")
+      .eq("id", firstID)
+      .single();
+    pct3_before = Number(beforeData?.pct_3 || 0);
+  }
+
+  let pct3_after_left = pct3_before;
+  let leftUpdates = [];
+
+  for (const r of leftMatches) {
+    const { data } = await supabaseClient
+      .from("BingoSQL")
+      .select("pct_3")
+      .eq("id", r.id)
+      .single();
+
+    const dbValue = Number(data?.pct_3 || 0);
+    const newValue = Number((dbValue + pct_3).toFixed(3));
+
+    pct3_after_left = newValue;
+
+    leftUpdates.push(
+      supabaseClient
+        .from("BingoSQL")
+        .update({ pct_3: newValue })
+        .eq("id", r.id)
+    );
+  }
+
+  await Promise.all(leftUpdates);
+
+  let pct3_after_right = pct3_after_left;
+  let rightUpdates = [];
+
+  for (const r of rightMatches) {
+    const { data } = await supabaseClient
+      .from("BingoSQL")
+      .select("pct_3")
+      .eq("id", r.id)
+      .single();
+
+    const dbValue = Number(data?.pct_3 || 0);
+    const newValue = Number((dbValue + pct_3).toFixed(3));
+
+    pct3_after_right = newValue;
+
+    rightUpdates.push(
+      supabaseClient
+        .from("BingoSQL")
+        .update({ pct_3: newValue })
+        .eq("id", r.id)
+    );
+  }
+
+  await Promise.all(rightUpdates);
+
+  const pct3_final = pct3_after_right;
+
+1. to table 70percentSQL insert
+CREATE TABLE IF NOT EXISTS public."70percentSQL" ( =  created
+    id BIGSERIAL PRIMARY KEY,
+    spintoken_vol NUMERIC(12,4) DEFAULT 0.000, = baseSpinpool
+    spin_time TIMESTAMPTZ NOT NULL, = the time when the bingo 6 character obtained
+    bingo_6_char VARCHAR(6) NOT NULL, = after finished spiins, bingo 6 character obtained
+
+    percent_3 NUMERIC(10,4),  = baseSpinpool * 0.03;
+    percent_6 NUMERIC(10,4), = baseSpinpool * 0.06;
+    percent_9 NUMERIC(10,4), = baseSpinpool * 0.09;
+    percent_12 NUMERIC(10,4), = baseSpinpool * 0.012;
+    percent_15 NUMERIC(10,4), = baseSpinpool * 0.015;
+    percent_18 NUMERIC(10,4), = baseSpinpool * 0.018;
+    percent_7 NUMERIC(10,4) = baseSpinpool * 0.07;
+);
+
+2. to 70pctCountSQL insert
+CREATE TABLE IF NOT EXISTS public."70pctCountSQL" ( = created
+    id BIGSERIAL PRIMARY KEY,
+    wallet_id_right_left VARCHAR(200) NOT NULL, = use ONLY 
+
+    pct_3_new NUMERIC(10,4),
+    pct_6_new NUMERIC(10,4),
+    pct_9_new NUMERIC(10,4),
+    pct_12_new NUMERIC(10,4),
+    pct_15_new NUMERIC(10,4),
+    pct_18_new NUMERIC(10,4),
+    pct_7_new NUMERIC(10,4)
+);
+
