@@ -385,6 +385,34 @@ document.getElementById("bingo-date").textContent = "Date: " + spinDate;
 
 localStorage.setItem("lastSpinDate", spinDate);
 
+  /* ALWAYS use displayed spinpooltoken as base */
+const baseSpinpool = Number(document.getElementById("spinpooltoken").textContent);
+
+const percent_3  = baseSpinpool * 0.03;
+const percent_6  = baseSpinpool * 0.06;
+const percent_9  = baseSpinpool * 0.09;
+const percent_12 = baseSpinpool * 0.12;
+const percent_15 = baseSpinpool * 0.15;
+const percent_18 = baseSpinpool * 0.18;
+const percent_7  = baseSpinpool * 0.07;
+
+  /* -------------------- INSERT INTO 70percentSQL -------------------- */
+
+await supabaseClient
+  .from("70percentSQL")
+  .insert({
+    spintoken_vol: baseSpinpool,
+    spin_time: new Date().toISOString(),
+    bingo_6_char: bingoCode,
+    percent_3: percent_3.toFixed(4),
+    percent_6: percent_6.toFixed(4),
+    percent_9: percent_9.toFixed(4),
+    percent_12: percent_12.toFixed(4),
+    percent_15: percent_15.toFixed(4),
+    percent_18: percent_18.toFixed(4),
+    percent_7: percent_7.toFixed(4)
+  });
+  
 spinning = false;
 }
 
