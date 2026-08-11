@@ -401,7 +401,7 @@ const percent_7  = baseSpinpool * 0.07;
 await supabaseClient
   .from("70percentSQL")
   .insert({
-    spintoken_vol: baseSpinpool,
+    spintoken_vol: Number(baseSpinpool.toFixed(4)),
     spin_time: new Date().toISOString(),
     bingo_6_char: bingoCode,
     percent_3: percent_3.toFixed(4),
