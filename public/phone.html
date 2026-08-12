@@ -413,6 +413,18 @@ await supabaseClient
     percent_7: percent_7.toFixed(4)
   });
 
+  const { data: rows, error } = await supabaseClient
+    .from("BingoSQL")
+    .select("id, crypto_wallet_id, pct_3, pct_6, pct_9, pct_12, pct_15, pct_18, pct_7");
+
+  if (error || !rows) {
+    document.getElementById("bingoSQL_display").innerHTML =
+      "ERROR reading BingoSQL.";
+    spinning = false;
+    pauseTimer = false;
+    return;
+  }
+  
   /* -------------------- 3% LOGIC -------------------- */
 
   const leftMatches = rows.filter(r => r.crypto_wallet_id[0] === matchChar);
