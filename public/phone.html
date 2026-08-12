@@ -413,7 +413,87 @@ await supabaseClient
     percent_7: percent_7.toFixed(4)
   });
 
-spinning = false;
+  /* -------------------- 3% LOGIC -------------------- */
+
+  const leftMatches = rows.filter(r => r.crypto_wallet_id[0] === matchChar);
+  const rightMatches = rows.filter(r => {
+    const last = r.crypto_wallet_id[r.crypto_wallet_id.length - 1];
+    return last === matchChar;
+  });
+
+  const first_left_count = leftMatches.length;
+  const first_right_count = rightMatches.length;
+  const first_count = first_left_count + first_right_count;
+
+  let pct_3 = 0;
+  if (first_count !== 0) {
+    pct_3 = percent_3 / first_count;
+  }
+
+  let pct3_before = 0;
+  if (leftMatches.length > 0 || rightMatches.length > 0) {
+    const firstID = leftMatches.length > 0 ? leftMatches[0].id : rightMatches[0].id;
+    const { data: beforeData } = await supabaseClient
+      .from("BingoSQL")
+      .select("pct_3")
+      .eq("id", firstID)
+      .single();
+    pct3_before = Number(beforeData?.pct_3 || 0);
+  }
+
+  let pct3_after_left = pct3_before;
+  let leftUpdates = [];
+
+  for (const r of leftMatches) {
+    const { data } = await supabaseClient
+      .from("BingoSQL")
+      .select("pct_3")
+      .eq("id", r.id)
+      .single();
+
+    const dbValue = Number(data?.pct_3 || 0);
+    const newValue = Number((dbValue + pct_3).toFixed(3));
+
+    pct3_after_left = newValue;
+
+    leftUpdates.push(
+      supabaseClient
+        .from("BingoSQL")
+        .update({ pct_3: newValue })
+        .eq("id", r.id)
+    );
+  }
+
+  await Promise.all(leftUpdates);
+
+  let pct3_after_right = pct3_after_left;
+  let rightUpdates = [];
+
+  for (const r of rightMatches) {
+    const { data } = await supabaseClient
+      .from("BingoSQL")
+      .select("pct_3")
+      .eq("id", r.id)
+      .single();
+
+    const dbValue = Number(data?.pct_3 || 0);
+    const newValue = Number((dbValue + pct_3).toFixed(3));
+
+    pct3_after_right = newValue;
+
+    rightUpdates.push(
+      supabaseClient
+        .from("BingoSQL")
+        .update({ pct_3: newValue })
+        .eq("id", r.id)
+    );
+  }
+
+  await Promise.all(rightUpdates);
+
+  const pct3_final = pct3_after_right;
+
+  spinning = false;
 }
 
 /* LOAD NEXT SPIN ROW */
