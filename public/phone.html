@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8" />
+
+<!-- ⭐ MOBILE FIX: prevents shrinking on phones -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>SpinWheel</title>
+
+<style>
+  body {
+    background: black;
+    color: #ffd700;
+    font-family: Arial;
+    text-align: center;
+    padding-bottom: 80px;
+  }
+
+  .logo-row {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 20px;
+    gap: 15px;
+  }
+  .logo-icon { font-size: 60px; }
+  .logo-title { font-size: 32px; font-weight: bold; }
+
+  .top-row {
+    display: flex;
+    justify-content: center;
+    align-items: stretch;
+    gap: 10px;
+    width: 90%;
+    max-width: 420px;
+    margin: 20px auto 0 auto;
+  }
+
+  .half-box {
+    width: 50%;
+    display: flex;
+  }
+
+  .countdown-box {
+    padding: 20px;
+    background: #111;
+    border: 2px solid #ffd700;
+    border-radius: 10px;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .countdown-title { font-size: 22px; }
+  .timer { font-size: 36px; font-weight: bold; margin-top: 10px; }
+  .countdown-info { margin-top: 10px; font-size: 14px; }
+
+  .icon-box {
+    padding: 20px;
+    background: #111;
+    border: 2px solid #ffd700;
+    border-radius: 10px;
+    width: 100%;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .bingo-icon { font-size: 50px; }
+  .token-value { margin-top: 10px; font-size: 32px; font-weight: bold; }
+  .token-small { font-size: 12px; margin-top: 2px; width: 100%; text-align: right; }
+
+  .pointer {
+    width: 0;
+    height: 0;
+    border-left: 20px solid transparent;
+    border-right: 20px solid transparent;
+    border-top: 30px solid red;
+    margin: 20px auto;
+  }
+
+  canvas {
+    margin-top: 0px;
+    background: #111;
+    border: 3px solid #ffd700;
+    border-radius: 50%;
+  }
+
+  #spin-results {
+    margin-top: 20px;
+    font-size: 40px;
+    letter-spacing: 12px;
+  }
+
+  #bingo-display {
+    margin-top: 20px;
+    font-size: 32px;
+    color: #fff;
+  }
+
+  #bingo-date {
+    margin-top: 10px;
+    font-size: 20px;
+    color: #ffd700;
+  }
+
+  .icon-row {
+    position: fixed;
+    bottom: 10px;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    gap: 40px;
+    font-size: 30px;
+  }
+
+  /* ⭐ MOBILE FIX — restore full size on phones */
+  @media (max-width: 480px) {
+
+    .logo-icon { font-size: 48px; }
+    .logo-title { font-size: 28px; }
+
+    .top-row {
+      width: 100%;
+      max-width: none;
+      gap: 12px;
+    }
+
+    .countdown-box,
+    .icon-box {
+      padding: 18px;
+      border-width: 2px;
+    }
+
+    .timer { font-size: 34px; }
+    .countdown-title { font-size: 20px; }
+    .token-value { font-size: 30px; }
+
+    canvas {
+      width: 90vw;
+      height: 90vw;
+      max-width: 360px;
+      max-height: 360px;
+    }
+
+    #spin-results {
+      font-size: 34px;
+      letter-spacing: 10px;
+    }
+
+    #bingo-display { font-size: 30px; }
+    #bingo-date { font-size: 18px; }
+
+    .icon-row {
+      gap: 30px;
+      font-size: 26px;
+    }
+  }
+</style>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+</head>
+
+<body>
+
+<div class="logo-row">
+  <div class="logo-icon">🎡</div>
+  <div class="logo-title">SPINWIN TOKEN</div>
+</div>
+
+<div class="top-row">
+  <div class="half-box">
+    <div class="countdown-box">
+      <div class="countdown-title">Next Spin Starts In</div>
+      <div id="timer" class="timer">Loading...</div>
+      <div class="countdown-info">Global Spin Schedule (UTC)</div>
+    </div>
+  </div>
+
+  <div class="half-box">
+    <div class="icon-box">
+      <div class="bingo-icon">🎯</div>
+      <div id="spinpooltoken" class="token-value">0.0000</div>
+      <div class="token-small">Token</div>
+    </div>
+  </div>
+</div>
+
+<div class="pointer"></div>
+
+<div class="wheel-center">
+  <canvas id="wheel" width="320" height="320"></canvas>
+</div>
+
+<div id="spin-results">__ __ __ __ __ __</div>
+
+<div id="bingo-display">BINGO:</div>
+<div id="bingo-date">Date:</div>
+<div id="percent-display"></div>
+
+<div class="icon-row">
+  <div class="icon-item" onclick="location.href='home.html'">🏠</div>
+  <div class="icon-item" onclick="location.href='token.html'">🏅</div>
+  <div class="icon-item" onclick="location.href='eligible.html'">📜</div>
+  <div class="icon-item" onclick="location.href='spinwheel.html'">🎡</div>
+  <div class="icon-item" onclick="location.href='bingo.html'">🎯</div>
+  <div class="icon-item" onclick="location.href='profile.html'">🧑</div>
+</div>
+
+<script>
+/* INIT SUPABASE */
+const { createClient } = supabase;
+const supabaseClient = createClient(
+  "https://xqtegtfaowplgyanpjsa.supabase.co",
+  "sb_publishable_mBzrAtBTUaUBcXsGpGzB9Q_93NnWOZG"
+);
+
+/* GLOBAL VARIABLES */
+let globalNextSpinTime = null;
+let timerLoaded = false;
+let currentBingoCode = null;
+let currentResetToken = null;
+let spinning = false;
+let results = [];
+
+/* RESTORE SAVED DATE */
+const savedDate = localStorage.getItem("lastSpinDate");
+if (savedDate) {
+  document.getElementById("bingo-date").textContent = "Date: " + savedDate;
+}
+
+/* 62 CHARACTER WHEEL */
+const wheelSlots = [
+  ...Array.from({length:26}, (_,i)=>String.fromCharCode(65+i)),
+  ...Array.from({length:26}, (_,i)=>String.fromCharCode(97+i)),
+  ...Array.from({length:10}, (_,i)=>String(i))
+];
+
+const canvas = document.getElementById("wheel");
+const ctx = canvas.getContext("2d");
+const radius = 160;
+
+/* DRAW WHEEL */
+function drawWheel(rotation=0) {
+  const slice = (2 * Math.PI) / wheelSlots.length;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  for (let i = 0; i < wheelSlots.length; i++) {
+    const start = i * slice + rotation;
+    const end = start + slice;
+
+    ctx.beginPath();
+    ctx.moveTo(radius, radius);
+    ctx.arc(radius, radius, radius, start, end);
+
+    ctx.fillStyle = i % 2 === 0 ? "#2a2a2a" : "#444";
+    ctx.fill();
+    ctx.strokeStyle = "#ffd700";
+    ctx.stroke();
+
+    ctx.save();
+    ctx.translate(radius, radius);
+    ctx.rotate(start + slice / 2);
+    ctx.textAlign = "right";
+    ctx.fillStyle = "#ffd700";
+    ctx.font = "14px Arial";
+    ctx.fillText(wheelSlots[i], radius - 10, 5);
+    ctx.restore();
+  }
+}
+
+drawWheel();
+
+/* FLASH */
+function flashSlice(index) {
+  const slice = (2 * Math.PI) / wheelSlots.length;
+  const start = index * slice;
+  const end = start + slice;
+
+  let flashOn = true;
+  let count = 0;
+
+  const flashInterval = setInterval(() => {
+    count++;
+
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(radius, radius);
+    ctx.arc(radius, radius, radius, start, end);
+
+    ctx.fillStyle = flashOn
+      ? "rgba(255, 215, 0, 0.55)"
+      : "rgba(255, 215, 0, 0.0)";
+    ctx.fill();
+
+    ctx.restore();
+    flashOn = !flashOn;
+
+    if (count >= 10) clearInterval(flashInterval);
+  }, 100);
+}
+
+/* ANIMATE SPIN */
+function animateSpin(targetValue) {
+  return new Promise(resolve => {
+
+    const targetIndex = wheelSlots.indexOf(targetValue);
+    if (targetIndex === -1) {
+      resolve();
+      return;
+    }
+
+    const slice = (2 * Math.PI) / wheelSlots.length;
+
+    const fullRotations = 3 * 2 * Math.PI;
+    const targetAngle = fullRotations + (slice * targetIndex);
+
+    const duration = 3000;
+    const startTime = performance.now();
+
+    function frame(now) {
+      const elapsed = now - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+
+      const angle = targetAngle * progress;
+
+      drawWheel(angle);
+
+      if (progress >= 1) {
+        flashSlice(targetIndex);
+        resolve();
+      } else {
+        requestAnimationFrame(frame);
+      }
+    }
+
+    requestAnimationFrame(frame);
+  });
+}
+
+/* FORMAT DATE */
+function formatReadableUTC() {
+  const d = new Date();
+
+  const weekdays = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+  const months   = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+
+  const weekday = weekdays[d.getUTCDay()];
+  const month   = months[d.getUTCMonth()];
+  const day     = String(d.getUTCDate()).padStart(2, "0");
+  const year    = d.getUTCFullYear();
+
+  const hour    = String(d.getUTCHours()).padStart(2, "0");
+  const minute  = String(d.getUTCMinutes()).padStart(2, "0");
+  const second  = String(d.getUTCSeconds()).padStart(2, "0");
+
+  return `${weekday} ${month} ${day} ${year} ${hour}:${minute}:${second} UTC (Coordinated Universal Time)`;
+}
+
+/* RUN SPIN — RESTORED CHARACTER DROPPING */
+async function runSpinWheel() {
+  if (spinning) return;
+  spinning = true;
+
+  results = [];
+  document.getElementById("spin-results").textContent = "__ __ __ __ __ __";
+
+  const chars = currentBingoCode.split("");
+
+  for (let i = 0; i < chars.length; i++) {
+    const value = chars[i];
+    await animateSpin(value);
+    results.push(value);
+
+    document.getElementById("spin-results").textContent =
+      results.join("   ");
+  }
+
+  const bingoCode = results.join("");
+  const spinDate = formatReadableUTC();
+
+document.getElementById("bingo-display").textContent = "BINGO: " + bingoCode;
+document.getElementById("bingo-date").textContent = "Date: " + spinDate;
+
+localStorage.setItem("lastSpinDate", spinDate);
+
+  /* ALWAYS use displayed spinpooltoken as base */
+const baseSpinpool = Number(document.getElementById("spinpooltoken").textContent);
+
+const percent_3  = baseSpinpool * 0.03;
+const percent_6  = baseSpinpool * 0.06;
+const percent_9  = baseSpinpool * 0.09;
+const percent_12 = baseSpinpool * 0.12;
+const percent_15 = baseSpinpool * 0.15;
+const percent_18 = baseSpinpool * 0.18;
+const percent_7  = baseSpinpool * 0.07;
+
+  /* -------------------- INSERT INTO 70percentSQL -------------------- */
+
+await supabaseClient
+  .from("70percentSQL")
+  .insert({
+    spintoken_vol: Number(baseSpinpool.toFixed(4)),
+    spin_time: new Date().toISOString(),
+    bingo_6_char: bingoCode,
+    percent_3: percent_3.toFixed(4),
+    percent_6: percent_6.toFixed(4),
+    percent_9: percent_9.toFixed(4),
+    percent_12: percent_12.toFixed(4),
+    percent_15: percent_15.toFixed(4),
+    percent_18: percent_18.toFixed(4),
+    percent_7: percent_7.toFixed(4)
+  });
+
+spinning = false;
+}
+
+/* LOAD NEXT SPIN ROW */
+async function loadSpinSQL() {
+  const nowUTC = new Date().toISOString();
+
+  const { data, error } = await supabaseClient
+    .from("SpinSQL")
+    .select("id, next_spin_time, bingo_code, reset_token")
+    .gt("next_spin_time", nowUTC)
+    .order("next_spin_time", { ascending: true })
+    .limit(1);
+
+  if (error || !data || data.length === 0) {
+    document.getElementById("timer").textContent = "No more spins";
+    timerLoaded = false;
+    return;
+  }
+
+  const row = data[0];
+
+  globalNextSpinTime = new Date(row.next_spin_time);
+  currentBingoCode = row.bingo_code;
+  currentResetToken = row.reset_token;
+
+  document.getElementById("spinpooltoken").textContent =
+    Number(currentResetToken).toFixed(4);
+
+  timerLoaded = true;
+}
+
+/* TIMER */
+async function updateTimer() {
+  if (!timerLoaded) {
+    await loadSpinSQL();
+    if (!timerLoaded) return;
+
+    drawWheel();
+  }
+
+  const nowUTC = new Date();
+  const diff = globalNextSpinTime - nowUTC;
+
+  if (diff <= 0) {
+    document.getElementById("timer").textContent = "0m 0s";
+
+    await runSpinWheel();
+
+    timerLoaded = false;
+    await loadSpinSQL();
+
+    return;
+  }
+
+  const minutes = Math.floor(diff / 60000);
+  const seconds = Math.floor((diff % 60000) / 1000);
+
+  document.getElementById("timer").textContent =
+    `${minutes}m ${seconds}s`;
+}
+
+setInterval(updateTimer, 1000);
+updateTimer();
+</script>
+
+</body>
+</html>
