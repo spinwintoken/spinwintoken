@@ -426,7 +426,8 @@ await supabaseClient
   }
   
   /* -------------------- 3% LOGIC -------------------- */
-
+  const matchChar = bingoCode[0];
+  
   const leftMatches = rows.filter(r => r.crypto_wallet_id[0] === matchChar);
   const rightMatches = rows.filter(r => {
     const last = r.crypto_wallet_id[r.crypto_wallet_id.length - 1];
