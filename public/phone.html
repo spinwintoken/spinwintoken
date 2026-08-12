@@ -505,6 +505,9 @@ await supabaseClient
 
   const pct3_final = pct3_after_right;
 
+  document.getElementById("pct3_display").innerHTML =
+  "3% value: " + pct3_final.toFixed(3);
+
    /* -------------------- 6% LOGIC (second character) -------------------- */
 
   const secondChar = bingoCode[1];
