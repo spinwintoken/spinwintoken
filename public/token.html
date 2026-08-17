@@ -76,13 +76,6 @@
     padding:10px;
   }
 
-  input[type=number]::-webkit-inner-spin-button,
-  input[type=number]::-webkit-outer-spin-button {
-    -webkit-appearance: none;
-    margin: 0;
-  }
-  input[type=number] { -moz-appearance: textfield; }
-
   .input-box {
     padding:12px;
     width:160px;
@@ -154,7 +147,7 @@
   <div class="price-title">TOKEN</div>
 
   <div class="price-sub">
-    Price Index = <span id="priceindexValue">-</span>
+    Price Index = <span id="priceindexValue">0.00000000</span>
     <span class="price-usdt">USDT</span>
   </div>
 
@@ -170,50 +163,15 @@
       <td>TOTAL TOKENS: 10,000,000</td>
     </tr>
     <tr>
-      <td><span id="token1Value">-</span></td>
-      <td><span id="token2Value">★★★★★</span></td>
-      <td><span id="token3Value">-</span></td>
+      <td><span id="token1Value">0.0000</span></td>
+      <td><span id="token2Value">0.0000</span></td>
+      <td><span id="token3Value">10000000.0000</span></td>
     </tr>
   </table>
 </div>
 
 <div class="price-box">
-  <div class="price-title">PURCHASE TOKENS</div>
-
-  <div style="margin-top:10px; font-size:16px;">
-    Minimum 0.0005
-  </div>
-
-  <div style="margin-top:20px;">
-    <label style="font-size:16px;">Enter Token Amount</label><br><br>
-
-    <div style="display:flex; justify-content:center; align-items:center; gap:20px;">
-      
-      <input 
-        id="buyAmount"
-        type="number"
-        step="0.0001"
-        min="0.0005"
-        value="0.0005"
-        class="input-box"
-      />
-
-      <div class="arrow-column">
-        <button class="arrow-btn" onclick="increaseAmount()">▲</button>
-        <button class="arrow-btn" onclick="decreaseAmount()">▼</button>
-      </div>
-
-    </div>
-
-    <button onclick="buyTokens()" class="buy-btn">
-      Buy Tokens
-    </button>
-  </div>
-</div>
-
-<div class="price-box">
   <div class="price-title">TEAM TOKEN PURCHASED</div>
-
   <div style="margin-top:20px; font-size:22px;">
     <span id="teamTokenValue">-</span>
   </div>
@@ -227,44 +185,6 @@
   <div class="icon-item" onclick="location.href='profile.html'">🧑</div>
 </div>
 
-<script>
-  function updateTimer() {
-    const now = new Date();
-    const nowET = new Date(now.toLocaleString("en-US", { timeZone: "America/New_York" }));
-    const day = nowET.getDay();
-    const hour = nowET.getHours();
-    let nextEventET = new Date(nowET);
-
-    function setThursday20() {
-      const daysToThu = (4 - day + 7) % 7;
-      nextEventET.setDate(nowET.getDate() + daysToThu);
-      nextEventET.setHours(20, 0, 0, 0);
-    }
-    function setNextMonday8() {
-      let daysToMon = (1 - day + 7) % 7;
-      if (daysToMon === 0) daysToMon = 7;
-      nextEventET.setDate(nowET.getDate() + daysToMon);
-      nextEventET.setHours(8, 0, 0, 0);
-    }
-
-    if (day === 1 && hour < 8) nextEventET.setHours(8, 0, 0, 0);
-    else if ((day === 1 && hour >= 8) || day === 2 || day === 3 || (day === 4 && hour < 20))
-      setThursday20();
-    else setNextMonday8();
-
-    const diff = nextEventET - nowET;
-    const hours = Math.floor(diff / 3600000);
-    const minutes = Math.floor((diff % 3600000) / 60000);
-    const seconds = Math.floor((diff % 60000) / 1000);
-
-    document.getElementById("timer").textContent =
-      `${hours}h ${minutes}m ${seconds}s`;
-  }
-
-  setInterval(updateTimer, 1000);
-  updateTimer();
-</script>
-
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <script>
@@ -274,27 +194,25 @@
    "sb_publishable_mBzrAtBTUaUBcXsGpGzB9Q_93NnWOZG"
   );
 
-  async function checkUser() {
-    const { data: { user } } = await supabaseClient.auth.getUser();
-    return user;
-  }
-
   async function loadTokenData() {
     const { data } = await supabaseClient
       .from("TokenSQL")
-      .select("priceindex, token1, token3")
+      .select("priceindex, token1, token2, token3")
       .limit(1)
       .maybeSingle();
 
     if (!data) return;
 
-    document.getElementById("priceindexValue").textContent = data.priceindex ?? "-";
-    document.getElementById("token1Value").textContent = data.token1 ?? "-";
-    document.getElementById("token3Value").textContent = data.token3 ?? "-";
+    document.getElementById("priceindexValue").textContent = data.priceindex ?? "0.00000000";
+    document.getElementById("token1Value").textContent = data.token1 ?? "0.0000";
+    document.getElementById("token2Value").textContent = data.token2 ?? "0.0000";
+    document.getElementById("token3Value").textContent = data.token3 ?? "10000000.0000";
   }
 
   async function loadTeamToken() {
-    const user = await checkUser();
+    const { data: { user } } = await supabaseClient.auth.getUser();
+    if (!user) return;
+
     const { data } = await supabaseClient
       .from("UsersSQL")
       .select("teamtokenpurchased")
@@ -313,40 +231,6 @@
     loadTokenData();
     loadTeamToken();
   }, 5000);
-
-  function increaseAmount() {
-    let v = parseFloat(document.getElementById("buyAmount").value);
-    if (isNaN(v)) v = 0.0005;
-    v += 0.0001;
-    document.getElementById("buyAmount").value = v.toFixed(4);
-  }
-
-  function decreaseAmount() {
-    let v = parseFloat(document.getElementById("buyAmount").value);
-    if (isNaN(v)) v = 0.0005;
-    v -= 0.0001;
-    if (v < 0.0005) v = 0.0005;
-    document.getElementById("buyAmount").value = v.toFixed(4);
-  }
-
-  function buyTokens() {
-    const v = document.getElementById("buyAmount").value;
-
-    if (v.includes(".")) {
-      const decimals = v.split(".")[1].length;
-      if (decimals > 4) {
-        alert("Value cannot be more than 4 decimals.");
-        return;
-      }
-    }
-
-    if (parseFloat(v) < 0.0005) {
-      alert("Minimum purchase is 0.0005");
-      return;
-    }
-
-    alert("Purchase successful: " + v + " tokens");
-  }
 
 </script>
 
