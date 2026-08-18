@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>SWT Token Purchase (Realtime)</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; }
+    .card { border: 1px solid #ccc; padding: 15px; margin-bottom: 15px; border-radius: 8px; }
+    .label { font-weight: bold; }
+    input { padding: 5px; margin-top: 5px; }
+    button { padding: 8px 12px; margin-top: 10px; }
+  </style>
+</head>
+<body>
+  <h1>SWT Token Purchase (Realtime)</h1>
+
+  <div class="card">
+    <div><span class="label">Current Priceindex:</span> <span id="priceindexValue">0.00000000</span></div>
+    <div><span class="label">Token1 Total:</span> <span id="token1Value">0</span></div>
+    <div><span class="label">Token2:</span> <span id="token2Value">★★★★★</span></div>
+    <div><span class="label">Token3:</span> <span id="token3Value">-</span></div>
+  </div>
+
+  <div class="card">
+    <div class="label">Buy SWT</div>
+    <div>
+      <label>Amount of SWT to buy:</label><br />
+      <input type="text" id="buyAmount" placeholder="Enter amount (max 4 decimals)" />
+    </div>
+    <div>
+      <button onclick="buyTokens()">Buy</button>
+    </div>
+  </div>
+
+  <script>
+    // Supabase client
+    const supabaseClient = supabase.createClient(
+      "https://xqtegtfaowplgyanpjsa.supabase.co",
+      "sb_publishable_mBzrAtBTUaUBcXsGpGzB9Q_93NnWOZG"
+    );
+
+    // Initial load (one-time)
+    async function loadTokenDataOnce() {
+      const { data, error } = await supabaseClient
+        .from("TokenSQL")
+        .select("priceindex, token1, token2, token3")
+        .limit(1)
+        .maybeSingle();
+
+      if (error) {
+        console.error("Error loading TokenSQL:", error);
+        return;
+      }
+      if (!data) return;
+
+      updateTokenDisplay(data);
+    }
+
+    // Update UI from TokenSQL row
+    function updateTokenDisplay(data) {
+      document.getElementById("priceindexValue").textContent =
+        data.priceindex ?? "0.00000000";
+
+      document.getElementById("token1Value").textContent =
+        data.token1 ?? "0";
+
+      document.getElementById("token2Value").textContent =
+        data.token2 ?? "★★★★★";
+
+      document.getElementById("token3Value").textContent =
+        data.token3 ?? "-";
+    }
+
+    // Realtime subscription
+    function subscribeTokenSQLRealtime() {
+      supabaseClient
+        .channel("TokenSQL-realtime")
+        .on(
+          "postgres_changes",
+          {
+            event: "*",
+            schema: "public",
+            table: "TokenSQL",
+          },
+          (payload) => {
+            if (payload.new) {
+              updateTokenDisplay(payload.new);
+            }
+          }
+        )
+        .subscribe();
+    }
+
+    // Buy flow with locked priceindex
+    async function buyTokens() {
+      const v = document.getElementById("buyAmount").value.trim();
+
+      // Validate decimals (max 4)
+      if (v.includes(".")) {
+        const decimals = v.split(".")[1].length;
+        if (decimals > 4) {
+          alert("Value cannot be more than 4 decimals.");
+          return;
+        }
+      }
+
+      const amountToken = parseFloat(v);
+      if (isNaN(amountToken)) {
+        alert("Please enter a valid number.");
+        return;
+      }
+
+      if (amountToken < 0.0005) {
+        alert("Minimum purchase is 0.0005 SWT.");
+        return;
+      }
+
+      // 🔒 LOCKED PRICEINDEX at the moment of BUY click
+      const priceindexText = document.getElementById("priceindexValue").textContent;
+      const lockedPriceindex = parseFloat(priceindexText || "0");
+
+      if (isNaN(lockedPriceindex)) {
+        alert("Priceindex is not available. Try again later.");
+        return;
+      }
+
+      // Cost based on locked priceindex
+      const costUSDT = amountToken * lockedPriceindex;
+
+      // Show accurate popup for THIS user
+      alert(
+        "Locked Priceindex: " + lockedPriceindex.toFixed(8) + " USDT per SWT\n" +
+        "Amount: " + amountToken + " SWT\n" +
+        "Total Cost: " + costUSDT.toFixed(8) + " USDT\n\n" +
+        "Send USDT-TRC20 to:\n" +
+        "TPfDxtX1Zt1BZ727vQcNpbD3oFwxfG3Fyj\n\n" +
+        "After payment is sent, click OK to continue."
+      );
+
+      // Collect buyer wallet (for SWT transfer)
+      const buyerWallet = prompt("Enter your TRON wallet address (to receive SWT):");
+      if (!buyerWallet) {
+        alert("Wallet address is required.");
+        return;
+      }
+
+      // Call backend to process purchase (payment check + SWT transfer + DB update)
+      try {
+        const res = await fetch("https://your-backend-url.com/api/buy", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            buyerWallet,
+            amountToken,
+            costUSDT,
+            lockedPriceindex
+          })
+        });
+
+        const data = await res.json();
+
+        if (!data.success) {
+          alert("Purchase failed: " + (data.message || "Unknown error"));
+          return;
+        }
+
+        alert(
+          "Purchase successful!\n\n" +
+          "Tokens sent: " + data.amountToken + " SWT\n" +
+          "Cost: " + data.costUSDT.toFixed(8) + " USDT\n" +
+          "Tx: " + data.txId
+        );
+
+        // No manual refresh needed:
+        // Supabase Realtime will push updated token1 + priceindex to all users.
+      } catch (e) {
+        console.error(e);
+        alert("Error contacting server. Please try again.");
+      }
+    }
+
+    // Start: initial load + realtime subscription
+    loadTokenDataOnce();
+    subscribeTokenSQLRealtime();
+  </script>
+</body>
+</html>
