@@ -228,6 +228,13 @@
       Buy Tokens
     </button>
 
+    <!-- ⭐ WHITE MESSAGE BELOW BUY TOKEN -->
+    <div style="margin-top:20px; font-size:18px; color:#ffffff; line-height:1;">
+      After your success payment:
+      1. You will receive SWT in your wallet: TYT6HXvqAreyoNnJPfoZwLNcignxCivGwy (TRC20)
+      2. You are automatically eligible 📜 for the NEXT SpinWin 🎯
+    </div>
+
   </div>
 </div>
 
@@ -352,14 +359,14 @@
     navigator.clipboard.writeText(addr)
       .then(() => {
         document.getElementById("popupBox").innerHTML += `
-          <div style="margin-top:15px; font-size:18px; color:#008000;">
+          <div style="margin-top:15px; font-size:18px; color:#00aa00; line-height:1;">
             ✔ Wallet address copied!
           </div>
         `;
       })
       .catch(() => {
         document.getElementById("popupBox").innerHTML += `
-          <div style="margin-top:15px; font-size:18px; color:#ff0000;">
+          <div style="margin-top:15px; font-size:18px; color:#ff0000; line-height:1;">
             Clipboard blocked — please copy manually:<br>${addr}
           </div>
         `;
@@ -437,8 +444,8 @@
         OK
       </button>
 
-      <!-- ⭐ Crystal’s message BELOW OK box (white text, no spacing) -->
-      <div style="margin-top:10px; font-size:18px; color:#ffffff; line-height:1;">
+      <!-- ⭐ GREEN MESSAGE BELOW OK -->
+      <div style="margin-top:10px; font-size:18px; color:#00aa00; line-height:1;">
         After your success payment:
         1. You will receive SWT in your wallet: TYT6HXvqAreyoNnJPfoZwLNcignxCivGwy (TRC20)
         2. You are automatically eligible 📜 for the NEXT SpinWin 🎯
@@ -452,4 +459,5 @@
 
 </body>
 </html>
+
 
