@@ -130,6 +130,25 @@
     cursor:pointer;
     margin-top:20px;
   }
+
+  /* ⭐ POPUP BOX */
+  #popupBox {
+    display:none;
+    position:fixed;
+    top:50%;
+    left:50%;
+    transform:translate(-50%, -50%);
+    background:#111;
+    color:#ffd700;
+    padding:25px;
+    border:2px solid #ffd700;
+    border-radius:12px;
+    width:90%;
+    max-width:420px;
+    font-size:20px;
+    z-index:9999;
+    text-align:left;
+  }
 </style>
 </head>
 
@@ -227,6 +246,9 @@
   <div class="icon-item" onclick="location.href='profile.html'">🧑</div>
 </div>
 
+<!-- ⭐ POPUP BOX -->
+<div id="popupBox"></div>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <script>
@@ -241,9 +263,6 @@
     return user;
   }
 
-  /* ---------------------------
-     INITIAL LOAD
-  ---------------------------- */
   async function loadTokenDataOnce() {
     const { data } = await supabaseClient
       .from("TokenSQL")
@@ -269,9 +288,6 @@
       data.token3 ?? "-";
   }
 
-  /* ---------------------------
-     REALTIME UPDATES
-  ---------------------------- */
   function subscribeTokenSQLRealtime() {
     supabaseClient
       .channel("TokenSQL-realtime")
@@ -291,9 +307,6 @@
       .subscribe();
   }
 
-  /* ---------------------------
-     TEAM TOKEN (still 5 sec)
-  ---------------------------- */
   async function loadTeamToken() {
     const user = await checkUser();
     const { data } = await supabaseClient
@@ -313,12 +326,9 @@
   loadTeamToken();
 
   setInterval(() => {
-    loadTeamToken();   // ONLY team token refreshes every 5 sec
+    loadTeamToken();
   }, 5000);
 
-  /* ---------------------------
-     AMOUNT BUTTONS
-  ---------------------------- */
   function increaseAmount() {
     let v = parseFloat(document.getElementById("buyAmount").value);
     if (isNaN(v)) v = 0.0005;
@@ -334,9 +344,6 @@
     document.getElementById("buyAmount").value = v.toFixed(4);
   }
 
-  /* ---------------------------
-     BUY TOKENS (locked priceindex)
-  ---------------------------- */
   async function buyTokens() {
     const v = document.getElementById("buyAmount").value;
 
@@ -354,7 +361,6 @@
       return;
     }
 
-    /* 🔒 LOCK PRICEINDEX AT BUY CLICK */
     const priceindexText =
       document.getElementById("priceindexValue").textContent;
     const lockedPriceindex = parseFloat(priceindexText || "0");
@@ -364,60 +370,57 @@
       return;
     }
 
-    /* COST BASED ON LOCKED PRICEINDEX */
     const costUSDT = amountToken * lockedPriceindex;
 
-    /* USER POPUP — ACCURATE FOR THIS USER */
-    alert(
-      "Locked Priceindex: " + lockedPriceindex.toFixed(8) + " USDT\n" +
-      "Amount: " + amountToken + " SWT\n" +
-      "Total Cost: " + costUSDT.toFixed(8) + " USDT\n\n" +
-      "Send USDT-TRC20 to:\n" +
-      "TPfDxtX1Zt1BZ727vQcNpbD3oFwxfG3Fyj\n\n" +
-      "After payment is sent, click OK to continue."
-    );
+    /* ⭐ CUSTOM POPUP */
+    const box = document.getElementById("popupBox");
 
-    const buyerWallet = prompt("Enter your TRON wallet address:");
-    if (!buyerWallet) {
-      alert("Wallet address required.");
-      return;
-    }
+    box.innerHTML = `
+      <div><strong>Locked Priceindex:</strong> ${lockedPriceindex.toFixed(8)} USDT</div>
+      <div><strong>Amount:</strong> ${amountToken} SWT</div>
+      <div><strong>Total Cost:</strong> ${costUSDT.toFixed(8)} USDT</div>
+      <br>
+      <div><strong>Send USDT‑TRC20 to:</strong></div>
 
-    /* BACKEND CALL */
-    try {
-      const res = await fetch("https://your-backend-url.com/api/buy", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          buyerWallet,
-          amountToken,
-          costUSDT,
-          lockedPriceindex
-        })
-      });
+      <div style="font-size:22px; margin-top:6px;">
+        TPfDxtX1Zt1BZ727vQcNpbD3oFwxfG3Fyj
+      </div>
 
-      const data = await res.json();
+      <button style="
+        margin-top:10px;
+        padding:10px 16px;
+        background:#333;
+        color:#ffd700;
+        border:1px solid #ffd700;
+        border-radius:8px;
+        font-size:18px;
+        cursor:pointer;
+        width:100%;
+      " onclick="
+        navigator.clipboard.writeText('TPfDxtX1Zt1BZ727vQcNpbD3oFwxfG3Fyj');
+        alert('Wallet address copied');
+      ">Copy Address</button>
 
-      if (!data.success) {
-        alert("Purchase failed: " + (data.message || "Unknown error"));
-        return;
-      }
+      <button style="
+        margin-top:20px;
+        padding:12px 20px;
+        background:#ffd700;
+        color:#000;
+        border:none;
+        border-radius:8px;
+        font-size:20px;
+        cursor:pointer;
+        width:100%;
+      " onclick="document.getElementById('popupBox').style.display='none';">
+        OK
+      </button>
+    `;
 
-      alert(
-        "Purchase successful!\n\n" +
-        "Tokens sent: " + data.amountToken + " SWT\n" +
-        "Cost: " + data.costUSDT.toFixed(8) + " USDT\n" +
-        "Tx: " + data.txId
-      );
-
-      /* Realtime will update token1 + priceindex automatically */
-    } catch (e) {
-      console.error(e);
-      alert("Server error. Try again.");
-    }
+    box.style.display = "block";
   }
 
 </script>
 
 </body>
 </html>
+
