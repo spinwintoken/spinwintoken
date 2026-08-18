@@ -282,4 +282,183 @@
       data.token1 ?? "-";
 
     document.getElementById("token2Value").textContent =
-      data
+      data.token2 ?? "★★★★★";
+
+    document.getElementById("token3Value").textContent =
+      data.token3 ?? "-";
+  }
+
+  function subscribeTokenSQLRealtime() {
+    supabaseClient
+      .channel("TokenSQL-realtime")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "TokenSQL",
+        },
+        (payload) => {
+          if (payload.new) {
+            updateTokenDisplay(payload.new);
+          }
+        }
+      )
+      .subscribe();
+  }
+
+  async function loadTeamToken() {
+    const user = await checkUser();
+    const { data } = await supabaseClient
+      .from("UsersSQL")
+      .select("teamtokenpurchased")
+      .eq("uid", user.id)
+      .maybeSingle();
+
+    if (!data) return;
+
+    document.getElementById("teamTokenValue").textContent =
+      data.teamtokenpurchased ?? "-";
+  }
+
+  loadTokenDataOnce();
+  subscribeTokenSQLRealtime();
+  loadTeamToken();
+
+  setInterval(() => {
+    loadTeamToken();
+  }, 5000);
+
+  function increaseAmount() {
+    let v = parseFloat(document.getElementById("buyAmount").value);
+    if (isNaN(v)) v = 0.0005;
+    v += 0.0001;
+    document.getElementById("buyAmount").value = v.toFixed(4);
+  }
+
+  function decreaseAmount() {
+    let v = parseFloat(document.getElementById("buyAmount").value);
+    if (isNaN(v)) v = 0.0005;
+    v -= 0.0001;
+    if (v < 0.0005) v = 0.0005;
+    document.getElementById("buyAmount").value = v.toFixed(4);
+  }
+
+  async function buyTokens() {
+    const v = document.getElementById("buyAmount").value;
+
+    if (v.includes(".")) {
+      const decimals = v.split(".")[1].length;
+      if (decimals > 4) {
+        alert("Value cannot be more than 4 decimals.");
+        return;
+      }
+    }
+
+    const amountToken = parseFloat(v);
+    if (amountToken < 0.0005) {
+      alert("Minimum purchase is 0.0005");
+      return;
+    }
+
+    const priceindexText =
+      document.getElementById("priceindexValue").textContent;
+    const lockedPriceindex = parseFloat(priceindexText || "0");
+
+    if (isNaN(lockedPriceindex)) {
+      alert("Priceindex unavailable. Try again.");
+      return;
+    }
+
+    const costUSDT = amountToken * lockedPriceindex;
+
+    /* ⭐ CUSTOM POPUP */
+    const box = document.getElementById("popupBox");
+
+    box.innerHTML = `
+      <div><strong>Locked Priceindex:</strong> ${lockedPriceindex.toFixed(8)} USDT</div>
+      <div><strong>Amount:</strong> ${amountToken} SWT</div>
+      <div><strong>Total Cost:</strong> ${costUSDT.toFixed(8)} USDT</div>
+      <br>
+      <div><strong>Send USDT‑TRC20 to:</strong></div>
+
+      <div style="font-size:22px; margin-top:6px;">
+        TPfDxtX1Zt1BZ727vQcNpbD3oFwxfG3Fyj
+      </div>
+
+      <button style="
+        margin-top:10px;
+        padding:10px 16px;
+        background:#eee;
+        color:#000;
+        border:1px solid #000;
+        border-radius:8px;
+        font-size:18px;
+        cursor:pointer;
+        width:100%;
+      " onclick="
+        navigator.clipboard.writeText('TPfDxtX1Zt1BZ727vQcNpbD3oFwxfG3Fyj');
+        alert('Wallet address copied');
+      ">Copy Address</button>
+
+      <button style="
+        margin-top:20px;
+        padding:12px 20px;
+        background:#ffd700;
+        color:#000;
+        border:none;
+        border-radius:8px;
+        font-size:20px;
+        cursor:pointer;
+        width:100%;
+      " onclick="document.getElementById('popupBox').style.display='none';">
+        OK
+      </button>
+    `;
+
+    box.style.display = "block";
+
+    /* ⭐ BACKEND CALL — SEND PURCHASE DATA TO SERVER */
+    const buyerWallet = prompt("Enter your TRON wallet address:");
+    if (!buyerWallet) {
+      alert("Wallet address required.");
+      return;
+    }
+
+    try {
+      const res = await fetch("/api/buy", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          buyerWallet,
+          amountToken,
+          costUSDT,
+          lockedPriceindex
+        })
+      });
+
+      const data = await res.json();
+
+      if (!data.success) {
+        alert("Purchase failed: " + (data.message || "Unknown error"));
+        return;
+      }
+
+      alert(
+        "Purchase successful!\n\n" +
+        "Tokens sent: " + data.amountToken + " SWT\n" +
+        "Cost: " + data.costUSDT.toFixed(8) + " USDT\n" +
+        "Tx: " + data.txId
+      );
+
+    } catch (e) {
+      console.error(e);
+      alert("Server error. Try again.");
+    }
+  }
+
+</script>
+
+</body>
+</html>
+
