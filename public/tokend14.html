@@ -228,13 +228,13 @@
       Buy Tokens
     </button>
 
-     <!-- ⭐ GREEN MESSAGE BELOW Buy Token -->
-    <div style="margin-top:20px; font-size:18px; color:#00aa00; line-height:1; text-align:left;">
-       After your success payment:<br>
-        1. You will receive SWT: TYT6HXvqAreyoNnJPfoZwLNcignxCivGwy (TRC20) in your wallet <br>
-        2. You are automatically eligible 📜 for the NEXT SpinWin 🎯
+    <!-- ⭐ WHITE MESSAGE BELOW BUY TOKEN (LEFT ALIGNED) -->
+    <div style="margin-top:20px; font-size:18px; color:#ffffff; line-height:1; text-align:left;">
+      After your success payment:<br>
+      1. You will receive SWT in your wallet: TYT6HXvqAreyoNnJPfoZwLNcignxCivGwy (TRC20)<br>
+      2. You are automatically eligible 📜 for the NEXT SpinWin 🎯
     </div>
-    
+
   </div>
 </div>
 
@@ -249,7 +249,6 @@
 <div class="icon-row">
   <div class="icon-item" onclick="location.href='home.html'">🏠</div>
   <div class="icon-item" onclick="location.href='token.html'">🏅</div>
-  <div class="icon-item" onclick="location.href='eligible.html'">📜</div>
   <div class="icon-item" onclick="location.href='spinwheel.html'">🎡</div>
   <div class="icon-item" onclick="location.href='bingo.html'">🎯</div>
   <div class="icon-item" onclick="location.href='profile.html'">🧑</div>
@@ -360,14 +359,14 @@
     navigator.clipboard.writeText(addr)
       .then(() => {
         document.getElementById("popupBox").innerHTML += `
-          <div style="margin-top:15px; font-size:18px; color:#00aa00; line-height:1;">
+          <div style="margin-top:15px; font-size:18px; color:#00aa00; line-height:1; text-align:left;">
             ✔ Wallet address copied!
           </div>
         `;
       })
       .catch(() => {
         document.getElementById("popupBox").innerHTML += `
-          <div style="margin-top:15px; font-size:18px; color:#ff0000; line-height:1;">
+          <div style="margin-top:15px; font-size:18px; color:#ff0000; line-height:1; text-align:left;">
             Clipboard blocked — please copy manually:<br>${addr}
           </div>
         `;
@@ -445,9 +444,9 @@
         OK
       </button>
 
-      <!-- ⭐ GREEN MESSAGE BELOW OK -->
-      <div style="margin-top:10px; font-size:18px; color:#00aa00; line-height:1;">
-        After your success payment: <br>
+      <!-- ⭐ GREEN MESSAGE BELOW OK (LEFT ALIGNED) -->
+      <div style="margin-top:10px; font-size:18px; color:#00aa00; line-height:1; text-align:left;">
+        After your success payment:<br>
         1. You will receive SWT: TYT6HXvqAreyoNnJPfoZwLNcignxCivGwy (TRC20) in your wallet.<br>
         2. You are automatically eligible 📜 for the NEXT SpinWin 🎯
       </div>
@@ -460,5 +459,6 @@
 
 </body>
 </html>
+
 
 
