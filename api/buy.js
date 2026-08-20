@@ -1,4 +1,4 @@
-import { sendSWT } from '../lib/sendSWT.js';
+// api/buy.js
 import { supabase } from '../lib/supabase.js';
 import { checkUSDTPayment } from '../lib/checkUSDT.js';
 
@@ -8,34 +8,44 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { uid, userWallet, amountSWT, amountUSDT } = req.body;
+    const { uid, userWallet, amountSWT } = req.body;
 
-    if (!uid || !userWallet || !amountSWT || !amountUSDT) {
+    if (!uid || !userWallet || !amountSWT) {
       return res.status(400).json({ error: 'Missing fields' });
     }
 
-    // 1. Check USDT payment
-    const payment = await checkUSDTPayment({ userWallet, amountUSDT });
+    // 1. Get newest TokenSQL row (decimal priceindex 16,8)
+    const { data: tokenRow, error: tokenErr } = await supabase
+      .from('TokenSQL')
+      .select('priceindex')
+      .order('id', { ascending: false })
+      .limit(1)
+      .maybeSingle();
 
-    if (!payment.ok) {
-      return res.status(400).json({ error: 'USDT payment not found or invalid' });
+    if (tokenErr || !tokenRow) {
+      return res.status(500).json({ error: 'Priceindex not available' });
     }
 
-    // 2. Send SWT to user
-    const txId = await sendSWT(userWallet, amountSWT);
+    const priceindex = tokenRow.priceindex;
 
-    // 3. Update Supabase
-    await supabase
-      .from('UsersSQL')
-      .update({
-        teamtokenpurchased: amountSWT,
-        lastswttxid: txId,
-      })
-      .eq('uid', uid);
+    // 2. Check USDT payment on-chain (decimal-safe)
+    const payment = await checkUSDTPayment({
+      uid,
+      userWallet,
+      amountToken: amountSWT,
+      priceindex,
+    });
 
+    if (!payment.ok) {
+      return res
+        .status(400)
+        .json({ error: 'USDT payment not found or invalid' });
+    }
+
+    // 3. Return success (SWT already sent inside checkUSDTPayment)
     return res.status(200).json({
       ok: true,
-      txId,
+      txId: payment.txId,
       message: 'SWT sent successfully',
     });
   } catch (err) {
@@ -43,3 +53,4 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: 'Server error' });
   }
 }
+
