@@ -14,7 +14,6 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Missing fields' });
     }
 
-    // 1. Get newest TokenSQL row (decimal priceindex 16,8)
     const { data: tokenRow, error: tokenErr } = await supabase
       .from('TokenSQL')
       .select('priceindex')
@@ -28,7 +27,6 @@ export default async function handler(req, res) {
 
     const priceindex = tokenRow.priceindex;
 
-    // 2. Check USDT payment on-chain (decimal-safe)
     const payment = await checkUSDTPayment({
       uid,
       userWallet,
@@ -42,7 +40,6 @@ export default async function handler(req, res) {
         .json({ error: 'USDT payment not found or invalid' });
     }
 
-    // 3. Return success (SWT already sent inside checkUSDTPayment)
     return res.status(200).json({
       ok: true,
       txId: payment.txId,
@@ -53,4 +50,5 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: 'Server error' });
   }
 }
+
 
