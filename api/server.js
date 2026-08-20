@@ -13,16 +13,11 @@ app.use(express.json());
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Serve static files from public/
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Spin API
 app.post('/api/spin', spinHandler);
-
-// Buy API
 app.post('/api/buy', buyHandler);
 
-// TokenSQL API (for token.html)
 app.get('/api/tokenSQL', async (req, res) => {
   try {
     const { data, error } = await supabase
@@ -37,7 +32,7 @@ app.get('/api/tokenSQL', async (req, res) => {
     }
 
     res.json({
-      priceindex: data.priceindex.toString(), // keep decimal as string
+      priceindex: data.priceindex.toString(),
       token1: data.token1,
       token2: data.token2,
       token3: data.token3,
@@ -48,7 +43,7 @@ app.get('/api/tokenSQL', async (req, res) => {
   }
 });
 
-// Start server
 app.listen(3000, () => {
   console.log('Server running at http://localhost:3000');
 });
+
