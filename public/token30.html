@@ -248,11 +248,8 @@
   <div class="icon-item" onclick="location.href='profile.html'">🧑</div>
 </div>
 
-<!-- ⭐ UID added here -->
-<div id="popupBox">
-  <div><strong>UID:</strong> <span id="uidDisplay"></span></div>
-  <br>
-</div>
+<!-- Popup -->
+<div id="popupBox"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
@@ -408,7 +405,6 @@
     const box = document.getElementById("popupBox");
 
     const user = await checkUser();
-    document.getElementById("uidDisplay").innerText = user.id;
 
     box.innerHTML = `
       <div><strong>UID:</strong> ${user.id}</div>
@@ -467,5 +463,6 @@
 
 </body>
 </html>
+
 
 
