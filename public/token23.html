@@ -267,7 +267,7 @@
   /* ⭐ FIXED: Load NEWEST TokenSQL row */
   async function loadTokenDataOnce() {
     const { data } = await supabaseClient
-      .from("tokensql")   /* ⭐ FINAL FIX */
+      ..from('"TokenSQL"')  /* ⭐ FINAL FIX */
       .select("priceindex, token1, token2, id")
       .order("id", { ascending: false })
       .limit(1)
