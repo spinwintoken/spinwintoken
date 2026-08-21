@@ -277,3 +277,194 @@
       .maybeSingle();
 
     if (!data) return;
+    updateTokenDisplay(data);
+  }
+
+  function formatNumber(value, decimals) {
+    return Number(value).toLocaleString("en-US", {
+      minimumFractionDigits: decimals,
+      maximumFractionDigits: decimals
+    });
+  }
+
+  function updateTokenDisplay(data) {
+
+    document.getElementById("priceindexValue").textContent =
+      formatNumber(data.priceindex, 8);
+
+    document.getElementById("token1Value").textContent =
+      formatNumber(data.token1, 4);
+
+    document.getElementById("token2Value").textContent =
+      formatNumber(data.token2, 4);
+
+    document.getElementById("token3Value").textContent = "-";
+  }
+
+  function subscribeTokenSQLRealtime() {
+    supabaseClient
+      .channel("TokenSQL-realtime")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "TokenSQL",
+        },
+        (payload) => {
+          if (payload.new) {
+            updateTokenDisplay(payload.new);
+          }
+        }
+      )
+      .subscribe();
+  }
+
+  async function loadTeamToken() {
+    const user = await checkUser();
+    const { data } = await supabaseClient
+      .from("UsersSQL")
+      .select("teamtokenpurchased")
+      .eq("uid", user.id)
+      .maybeSingle();
+
+    if (!data) return;
+
+    document.getElementById("teamTokenValue").textContent =
+      data.teamtokenpurchased ?? "-";
+  }
+
+  loadTokenDataOnce();
+  subscribeTokenSQLRealtime();
+  loadTeamToken();
+
+  setInterval(() => {
+    loadTeamToken();
+  }, 5000);
+
+  function increaseAmount() {
+    let v = parseFloat(document.getElementById("buyAmount").value);
+    if (isNaN(v)) v = 0.0005;
+    v += 0.0001;
+    document.getElementById("buyAmount").value = v.toFixed(4);
+  }
+
+  function decreaseAmount() {
+    let v = parseFloat(document.getElementById("buyAmount").value);
+    if (isNaN(v)) v = 0.0005;
+    v -= 0.0001;
+    if (v < 0.0005) v = 0.0005;
+    document.getElementById("buyAmount").value = v.toFixed(4);
+  }
+
+  function copyWalletAddress() {
+    const addr = "TPfDxtX1Zt1BZ727vQcNpbD3oFwxfG3Fyj";
+
+    navigator.clipboard.writeText(addr)
+      .then(() => {
+        document.getElementById("popupBox").innerHTML += `
+          <div style="margin-top:15px; font-size:18px; color:#00aa00; line-height:1; text-align:left;">
+            ✔ Wallet address copied!
+          </div>
+        `;
+      })
+      .catch(() => {
+        document.getElementById("popupBox").innerHTML += `
+          <div style="margin-top:15px; font-size:18px; color:#ff0000; line-height:1; text-align:left;">
+            Clipboard blocked — please copy manually:<br>${addr}
+          </div>
+        `;
+      });
+  }
+
+  async function buyTokens() {
+    const v = document.getElementById("buyAmount").value;
+
+    if (v.includes(".")) {
+      const decimals = v.split(".")[1].length;
+      if (decimals > 4) {
+        alert("Value cannot be more than 4 decimals.");
+        return;
+      }
+    }
+
+    const amountToken = parseFloat(v);
+    if (amountToken < 0.0005) {
+      alert("Minimum purchase is 0.0005");
+      return;
+    }
+
+    const priceindexText =
+      document.getElementById("priceindexValue").textContent;
+    const lockedPriceindex = parseFloat(priceindexText.replace(/,/g, ""));
+
+    if (isNaN(lockedPriceindex)) {
+      alert("Priceindex unavailable. Try again.");
+      return;
+    }
+
+    const costUSDT = amountToken * lockedPriceindex;
+
+    const box = document.getElementById("popupBox");
+
+    const user = await checkUser();
+    document.getElementById("uidDisplay").innerText = user.id;
+
+    box.innerHTML = `
+      <div><strong>UID:</strong> ${user.id}</div>
+      <br>
+
+      <div><strong>Locked Priceindex:</strong> ${formatNumber(lockedPriceindex, 8)} USDT</div>
+      <div><strong>Amount:</strong> ${amountToken} SWT</div>
+      <div><strong>Total Cost:</strong> ${formatNumber(costUSDT, 8)} USDT</div>
+      <br>
+
+      <div><strong>Send USDT‑TRC20 to:</strong></div>
+
+      <div style="font-size:22px; margin-top:6px;">
+        TPfDxtX1Zt1BZ727vQcNpbD3oFwxfG3Fyj
+      </div>
+
+      <button style="
+        margin-top:10px;
+        padding:10px 16px;
+        background:#eee;
+        color:#000;
+        border:1px solid #000;
+        border-radius:8px;
+        font-size:18px;
+        cursor:pointer;
+        width:100%;
+      " onclick="copyWalletAddress()">
+        Copy Address
+      </button>
+
+      <button style="
+        margin-top:20px;
+        padding:12px 20px;
+        background:#ffd700;
+        color:#000;
+        border:none;
+        border-radius:8px;
+        font-size:20px;
+        cursor:pointer;
+        width:100%;
+      " onclick="document.getElementById('popupBox').style.display='none';">
+        OK
+      </button>
+
+      <div style="margin-top:10px; font-size:18px; color:#00aa00; line-height:1; text-align:left;">
+        After your success payment:<br>
+        1. You will receive SWT: TYT6HXvqAreyoNnJPfoZwLNcignxCivGwy (TRC20) in your wallet.<br>
+        2. You are automatically eligible 📜 for the NEXT SpinWin 🎯
+      </div>
+    `;
+
+    box.style.display = "block";
+  }
+
+</script>
+
+</body>
+</html>
+
