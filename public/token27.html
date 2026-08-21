@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Token - SpinWinToken</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+<style>
+  body {
+    background:#000;
+    color:#ffd700;
+    font-family:Arial, sans-serif;
+    margin:0;
+    padding:0;
+    text-align:center;
+    padding-bottom:90px;
+  }
+
+  .logo-row {
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:15px;
+    margin-top:20px;
+  }
+  .logo-icon { font-size:60px; }
+  .logo-title { font-size:28px; font-weight:bold; }
+
+  .countdown-box {
+    margin-top:20px;
+    padding:20px;
+    background:#111;
+    border:1px solid #ffd700;
+    border-radius:10px;
+    width:90%;
+    max-width:420px;
+    margin-left:auto;
+    margin-right:auto;
+  }
+  .countdown-title { font-size:20px; }
+  .timer { font-size:32px; font-weight:bold; margin-top:10px; }
+  .countdown-info { margin-top:10px; font-size:14px; }
+
+  .price-box {
+    margin-top:20px;
+    padding:20px;
+    background:#111;
+    border:1px solid #ffd700;
+    border-radius:10px;
+    width:90%;
+    max-width:420px;
+    margin-left:auto;
+    margin-right:auto;
+    text-align:center;
+  }
+
+  .price-sub {
+    font-size:26px;
+    font-weight:bold;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    gap:8px;
+  }
+  #priceindexValue { font-size:30px; font-weight:bold; }
+  .price-usdt { font-size:22px; font-weight:bold; }
+
+  table {
+    width:100%;
+    color:#ffd700;
+    font-size:14px;
+    border-collapse:collapse;
+  }
+  td {
+    border:1px solid #ffd700;
+    padding:10px;
+  }
+
+  .input-box {
+    padding:12px;
+    width:160px;
+    border-radius:8px;
+    border:1px solid #ffd700;
+    background:#222;
+    color:#ffd700;
+    text-align:center;
+    font-size:22px;
+  }
+
+  .arrow-column {
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+  }
+  .arrow-btn {
+    background:#ffd700;
+    color:#000;
+    border:none;
+    padding:10px 14px;
+    font-size:26px;
+    border-radius:6px;
+    cursor:pointer;
+  }
+
+  .icon-row {
+    position:fixed;
+    bottom:10px;
+    left:0;
+    width:100%;
+    display:flex;
+    justify-content:center;
+    gap:40px;
+  }
+  .icon-item { font-size:26px; opacity:0.9; cursor:pointer; }
+
+  .buy-btn {
+    padding:16px 34px;
+    font-size:22px;
+    background:#ffd700;
+    color:#000;
+    border:none;
+    border-radius:10px;
+    cursor:pointer;
+    margin-top:20px;
+  }
+
+  #popupBox {
+    display:none;
+    position:fixed;
+    top:50%;
+    left:50%;
+    transform:translate(-50%, -50%);
+    background:#ffffff;
+    color:#000000;
+    padding:25px;
+    border:2px solid #ffd700;
+    border-radius:12px;
+    width:90%;
+    max-width:420px;
+    font-size:20px;
+    z-index:9999;
+    text-align:left;
+  }
+</style>
+</head>
+
+<body>
+
+<div class="logo-row">
+  <div class="logo-icon">🎡</div>
+  <div class="logo-title">SPINWIN TOKEN</div>
+</div>
+
+<div class="countdown-box">
+  <div class="countdown-title">Spin Win Starts In</div>
+  <div id="timer" class="timer">Loading...</div>
+  <div class="countdown-info">
+    Eastern Standard Time (ET)<br>
+    Monday 8am • Thursday 8pm<br>
+    84‑hour cycle
+  </div>
+</div>
+
+<div class="price-box">
+  <div class="price-title">TOKEN</div>
+
+  <div class="price-sub">
+    Price Index = <span id="priceindexValue">-</span>
+    <span class="price-usdt">USDT</span>
+  </div>
+
+  <table>
+    <tr>
+      <td><strong>For Purchase</strong></td>
+      <td><strong>Reward</strong></td>
+      <td><strong>SPIN WIN</strong></td>
+    </tr>
+    <tr>
+      <td>TOTAL TOKENS: 10,000,000</td>
+      <td>TOTAL TOKENS: 1,000,000</td>
+      <td>TOTAL TOKENS: 10,000,000</td>
+    </tr>
+    <tr>
+      <td>
+        Token Purchased<br>
+        <span id="token1Value">-</span>
+      </td>
+      <td><span id="token2Value">★★★★★</span></td>
+      <td><span id="token3Value">-</span></td>
+    </tr>
+  </table>
+</div>
+
+<div class="price-box">
+  <div class="price-title">PURCHASE TOKENS</div>
+
+  <div style="margin-top:10px; font-size:16px;">
+    Minimum 0.0005
+  </div>
+
+  <div style="margin-top:20px;">
+    <label style="font-size:16px;">Enter Token Amount</label><br><br>
+
+    <div style="display:flex; justify-content:center; align-items:center; gap:20px;">
+      
+      <input 
+        id="buyAmount"
+        type="number"
+        step="0.0001"
+        min="0.0005"
+        value="0.0005"
+        class="input-box"
+      />
+
+      <div class="arrow-column">
+        <button class="arrow-btn" onclick="increaseAmount()">▲</button>
+        <button class="arrow-btn" onclick="decreaseAmount()">▼</button>
+      </div>
+
+    </div>
+
+    <button onclick="buyTokens()" class="buy-btn">
+      Buy Tokens
+    </button>
+
+    <div style="margin-top:20px; font-size:18px; color:#ffffff; line-height:1; text-align:left;">
+      After your success payment:<br>
+      1. You will receive SWT in your wallet: TYT6HXvqAreyoNnJPfoZwLNcignxCivGwy (TRC20)<br>
+      2. You are automatically eligible 📜 for the NEXT SpinWin 🎯
+    </div>
+
+  </div>
+</div>
+
+<div class="price-box">
+  <div class="price-title">TEAM TOKEN PURCHASED</div>
+
+  <div style="margin-top:20px; font-size:22px;">
+    <span id="teamTokenValue">-</span>
+  </div>
+</div>
+
+<div class="icon-row">
+  <div class="icon-item" onclick="location.href='home.html'">🏠</div>
+  <div class="icon-item" onclick="location.href='token.html'">🏅</div>
+  <div class="icon-item" onclick="location.href='spinwheel.html'">🎡</div>
+  <div class="icon-item" onclick="location.href='bingo.html'">🎯</div>
+  <div class="icon-item" onclick="location.href='profile.html'">🧑</div>
+</div>
+
+<div id="popupBox"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+
+  const supabaseClient = supabase.createClient(
+   "https://xqtegtfaowplgyanpjsa.supabase.co",
+   "sb_publishable_mBzrAtBTUaUBcXsGpGzB9Q_93NnWOZG"
+  );
+
+  async function checkUser() {
+    const { data: { user } } = await supabaseClient.auth.getUser();
+    return user;
+  }
+
+  /* ⭐ FIXED: Load NEWEST TokenSQL row */
+  async function loadTokenDataOnce() {
+    const { data } = await supabaseClient
+      .from("TokenSQL")   /* ⭐ FINAL FIX — correct table name */
+      .select("priceindex, token1, token2, id")
+      .order("id", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (!data) return;
+    updateTokenDisplay(data);
+  }
+
+  /* ⭐ FIXED: priceindex 8 decimals + token1 display */
+  function updateTokenDisplay(data) {
+
+    const px = Number(data.priceindex || 0).toFixed(8);
+    document.getElementById("priceindexValue").textContent = px;
+
+    document.getElementById("token1Value").textContent =
+      Number(data.token1).toFixed(4);
+
+    document.getElementById("token2Value").textContent =
+      Number(data.token2).toFixed(4);
+
+    document.getElementById("token3Value").textContent = "-";
+  }
+
+  function subscribeTokenSQLRealtime() {
+    supabaseClient
+      .channel("TokenSQL-realtime")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "TokenSQL",
+        },
+        (payload) => {
+          if (payload.new) {
+            updateTokenDisplay(payload.new);
+          }
+        }
+      )
+      .subscribe();
+  }
+
+  async function loadTeamToken() {
+    const user = await checkUser();
+    const { data } = await supabaseClient
+      .from("UsersSQL")
+      .select("teamtokenpurchased")
+      .eq("uid", user.id)
+      .maybeSingle();
+
+    if (!data) return;
+
+    document.getElementById("teamTokenValue").textContent =
+      data.teamtokenpurchased ?? "-";
+  }
+
+  loadTokenDataOnce();
+  subscribeTokenSQLRealtime();
+  loadTeamToken();
+
+  setInterval(() => {
+    loadTeamToken();
+  }, 5000);
+
+  function increaseAmount() {
+    let v = parseFloat(document.getElementById("buyAmount").value);
+    if (isNaN(v)) v = 0.0005;
+    v += 0.0001;
+    document.getElementById("buyAmount").value = v.toFixed(4);
+  }
+
+  function decreaseAmount() {
+    let v = parseFloat(document.getElementById("buyAmount").value);
+    if (isNaN(v)) v = 0.0005;
+    v -= 0.0001;
+    if (v < 0.0005) v = 0.0005;
+    document.getElementById("buyAmount").value = v.toFixed(4);
+  }
+
+  function copyWalletAddress() {
+    const addr = "TPfDxtX1Zt1BZ727vQcNpbD3oFwxfG3Fyj";
+
+    navigator.clipboard.writeText(addr)
+      .then(() => {
+        document.getElementById("popupBox").innerHTML += `
+          <div style="margin-top:15px; font-size:18px; color:#00aa00; line-height:1; text-align:left;">
+            ✔ Wallet address copied!
+          </div>
+        `;
+      })
+      .catch(() => {
+        document.getElementById("popupBox").innerHTML += `
+          <div style="margin-top:15px; font-size:18px; color:#ff0000; line-height:1; text-align:left;">
+            Clipboard blocked — please copy manually:<br>${addr}
+          </div>
+        `;
+      });
+  }
+
+  async function buyTokens() {
+    const v = document.getElementById("buyAmount").value;
+
+    if (v.includes(".")) {
+      const decimals = v.split(".")[1].length;
+      if (decimals > 4) {
+        alert("Value cannot be more than 4 decimals.");
+        return;
+      }
+    }
+
+    const amountToken = parseFloat(v);
+    if (amountToken < 0.0005) {
+      alert("Minimum purchase is 0.0005");
+      return;
+    }
+
+    const priceindexText =
+      document.getElementById("priceindexValue").textContent;
+    const lockedPriceindex = parseFloat(priceindexText || "0");
+
+    if (isNaN(lockedPriceindex)) {
+      alert("Priceindex unavailable. Try again.");
+      return;
+    }
+
+    const costUSDT = amountToken * lockedPriceindex;
+
+    const box = document.getElementById("popupBox");
+
+    box.innerHTML = `
+      <div><strong>Locked Priceindex:</strong> ${lockedPriceindex.toFixed(8)} USDT</div>
+      <div><strong>Amount:</strong> ${amountToken} SWT</div>
+      <div><strong>Total Cost:</strong> ${costUSDT.toFixed(8)} USDT</div>
+      <br>
+
+      <div><strong>Send USDT‑TRC20 to:</strong></div>
+
+      <div style="font-size:22px; margin-top:6px;">
+        TPfDxtX1Zt1BZ727vQcNpbD3oFwxfG3Fyj
+      </div>
+
+      <button style="
+        margin-top:10px;
+        padding:10px 16px;
+        background:#eee;
+        color:#000;
+        border:1px solid #000;
+        border-radius:8px;
+        font-size:18px;
+        cursor:pointer;
+        width:100%;
+      " onclick="copyWalletAddress()">
+        Copy Address
+      </button>
+
+      <button style="
+        margin-top:20px;
+        padding:12px 20px;
+        background:#ffd700;
+        color:#000;
+        border:none;
+        border-radius:8px;
+        font-size:20px;
+        cursor:pointer;
+        width:100%;
+      " onclick="document.getElementById('popupBox').style.display='none';">
+        OK
+      </button>
+
+      <div style="margin-top:10px; font-size:18px; color:#00aa00; line-height:1; text-align:left;">
+        After your success payment:<br>
+        1. You will receive SWT: TYT6HXvqAreyoNnJPfoZwLNcignxCivGwy (TRC20) in your wallet.<br>
+        2. You are automatically eligible 📜 for the NEXT SpinWin 🎯
+      </div>
+    `;
+
+    box.style.display = "block";
+  }
+
+</script>
+
+</body>
+</html>
