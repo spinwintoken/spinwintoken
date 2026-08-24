@@ -256,6 +256,11 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <script>
+  
+  const supabaseClient = supabase.createClient(
+   "https://xqtegtfaowplgyanpjsa.supabase.co",
+   "sb_publishable_mBzrAtBTUaUBcXsGpGzB9Q_93NnWOZG"
+  );
 
   function closePopup() {
   const box = document.getElementById("popupBox");
@@ -263,11 +268,6 @@
   box.innerHTML = "";
 }
   
-  const supabaseClient = supabase.createClient(
-   "https://xqtegtfaowplgyanpjsa.supabase.co",
-   "sb_publishable_mBzrAtBTUaUBcXsGpGzB9Q_93NnWOZG"
-  );
-
   async function checkUser() {
     const { data: { user } } = await supabaseClient.auth.getUser();
     return user;
