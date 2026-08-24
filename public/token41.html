@@ -256,11 +256,17 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <script>
-  
+
   const supabaseClient = supabase.createClient(
-   "https://xqtegtfaowplgyanpjsa.supabase.co",
-   "sb_publishable_mBzrAtBTUaUBcXsGpGzB9Q_93NnWOZG"
+    "https://xqtegtfaowplgyanpjsa.supabase.co",
+    "sb_publishable_mBzrAtBTUaUBcXsGpGzB9Q_93NnWOZG"
   );
+
+  function closePopup() {
+    const box = document.getElementById("popupBox");
+    box.style.display = "none";
+    box.innerHTML = "";
+  }
 
   async function checkUser() {
     const { data: { user } } = await supabaseClient.auth.getUser();
@@ -269,11 +275,7 @@
 
   async function loadUID() {
     const user = await checkUser();
-    if (user) {
-      document.getElementById("uidDisplay").textContent = user.id;
-    } else {
-      document.getElementById("uidDisplay").textContent = "NO-USER";
-    }
+    document.getElementById("uidDisplay").textContent = user ? user.id : "NO-USER";
   }
 
   async function loadTokenDataOnce() {
@@ -284,8 +286,7 @@
       .limit(1)
       .maybeSingle();
 
-    if (!data) return;
-    updateTokenDisplay(data);
+    if (data) updateTokenDisplay(data);
   }
 
   function formatNumber(value, decimals) {
@@ -296,7 +297,6 @@
   }
 
   function updateTokenDisplay(data) {
-
     document.getElementById("priceindexValue").textContent =
       formatNumber(data.priceindex, 8);
 
@@ -314,15 +314,9 @@
       .channel("TokenSQL-realtime")
       .on(
         "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "TokenSQL",
-        },
+        { event: "*", schema: "public", table: "TokenSQL" },
         (payload) => {
-          if (payload.new) {
-            updateTokenDisplay(payload.new);
-          }
+          if (payload.new) updateTokenDisplay(payload.new);
         }
       )
       .subscribe();
@@ -330,26 +324,19 @@
 
   async function loadTeamToken() {
     const user = await checkUser();
+    if (!user) return;
+
     const { data } = await supabaseClient
       .from("UsersSQL")
       .select("teamtokenpurchased")
       .eq("uid", user.id)
       .maybeSingle();
 
-    if (!data) return;
-
-    document.getElementById("teamTokenValue").textContent =
-      data.teamtokenpurchased ?? "-";
+    if (data) {
+      document.getElementById("teamTokenValue").textContent =
+        data.teamtokenpurchased ?? "-";
+    }
   }
-
-  loadTokenDataOnce();
-  subscribeTokenSQLRealtime();
-  loadTeamToken();
-  loadUID();
-
-  setInterval(() => {
-    loadTeamToken();
-  }, 5000);
 
   function increaseAmount() {
     let v = parseFloat(document.getElementById("buyAmount").value);
@@ -372,15 +359,8 @@
     navigator.clipboard.writeText(addr)
       .then(() => {
         document.getElementById("popupBox").innerHTML += `
-          <div style="margin-top:15px; font-size:18px; color:#00aa00; line-height:1; text-align:left;">
+          <div style="margin-top:15px; font-size:18px; color:#00aa00;">
             ✔ Wallet address copied!
-          </div>
-        `;
-      })
-      .catch(() => {
-        document.getElementById("popupBox").innerHTML += `
-          <div style="margin-top:15px; font-size:18px; color:#ff0000; line-height:1; text-align:left;">
-            Clipboard blocked — please copy manually:<br>${addr}
           </div>
         `;
       });
@@ -390,7 +370,7 @@
     const { error } = await supabaseClient
       .from("EligibleSQL")
       .insert({
-        uid: uid,
+        uid,
         user_wallet_address: userWallet,
         amount_token: amountToken,
         locked_priceindex: lockedPriceindex,
@@ -423,8 +403,7 @@
       return;
     }
 
-    const priceindexText =
-      document.getElementById("priceindexValue").textContent;
+    const priceindexText = document.getElementById("priceindexValue").textContent;
     const lockedPriceindex = parseFloat(priceindexText.replace(/,/g, ""));
 
     if (isNaN(lockedPriceindex)) {
@@ -442,70 +421,33 @@
     box.innerHTML = `
       <div style="text-align:center; font-size:22px; color:#ffd700; font-weight:bold;">
         UID: ${uid}
-      </div>
-      <br>
+      </div><br>
 
       <div><strong>Locked Priceindex:</strong> ${formatNumber(lockedPriceindex, 8)} USDT</div>
       <div><strong>Amount:</strong> ${amountToken} SWT</div>
-      <div><strong>Total Cost:</strong> ${formatNumber(costUSDT, 8)} USDT</div>
-      <br>
+      <div><strong>Total Cost:</strong> ${formatNumber(costUSDT, 8)} USDT</div><br>
 
       <div><strong>Send USDT‑TRC20 to:</strong></div>
-
       <div style="font-size:22px; margin-top:6px;">
         TMZgxZqF389vdwRMenMwaj16SjxfYPt15V
       </div>
 
-      <button style="
-        margin-top:10px;
-        padding:10px 16px;
-        background:#eee;
-        color:#000;
-        border:1px solid #000;
-        border-radius:8px;
-        font-size:18px;
-        cursor:pointer;
-        width:100%;
-      " onclick="copyWalletAddress()">
+      <button style="margin-top:10px; padding:10px 16px; width:100%;"
+        onclick="copyWalletAddress()">
         Copy Address
       </button>
 
       <div style="margin-top:20px;">
         <strong>Enter your TRC20 wallet address:</strong><br>
-        <input 
-          id="userWalletInput"
-          type="text"
+        <input id="userWalletInput" type="text"
           placeholder="TXd77zLFPLCxEMD9pfhpjk283LPGB7R7Z1"
-          style="
-            width:100%;
-            padding:12px;
-            font-size:18px;
-            border:1px solid #000;
-            border-radius:8px;
-            margin-top:8px;
-          "
-        />
+          style="width:100%; padding:12px; font-size:18px; margin-top:8px;" />
       </div>
 
-      <button style="
-        margin-top:20px;
-        padding:12px 20px;
-        background:#ffd700;
-        color:#000;
-        border:none;
-        border-radius:8px;
-        font-size:20px;
-        cursor:pointer;
-        width:100%;
-      " onclick="confirmPurchase('${uid}', ${amountToken}, ${lockedPriceindex}, ${costUSDT})">
+      <button style="margin-top:20px; padding:12px 20px; width:100%; background:#ffd700;"
+        onclick="confirmPurchase('${uid}', ${amountToken}, ${lockedPriceindex}, ${costUSDT})">
         Confirm Purchase
       </button>
-
-      <div style="margin-top:10px; font-size:18px; color:#00aa00; line-height:1; text-align:left;">
-        After your success payment:<br>
-        1. You will receive SWT: TXd77zLFPLCxEMD9pfhpjk283LPGB7R7Z1 (TRC20) in your wallet.<br>
-        2. You are automatically eligible 📜 for the NEXT SpinWin 🎯
-      </div>
     `;
 
     box.style.display = "block";
@@ -519,23 +461,20 @@
       return;
     }
 
-    const ok = await insertEligibleSQL(
-      uid,
-      userWallet,
-      amountToken,
-      lockedPriceindex,
-      costUSDT
-    );
-    
-if (ok) {
-  alert("Purchase recorded. Now send USDT to complete payment.");
-  document.getElementById("popupBox").style.display = "none";
-}
+    const ok = await insertEligibleSQL(uid, userWallet, amountToken, lockedPriceindex, costUSDT);
 
-}
-
+    if (ok) {
+      alert("Purchase recorded. Now send USDT to complete payment.");
+      closePopup();
     }
   }
+
+  loadTokenDataOnce();
+  subscribeTokenSQLRealtime();
+  loadTeamToken();
+  loadUID();
+
+  setInterval(loadTeamToken, 5000);
 
 </script>
 
