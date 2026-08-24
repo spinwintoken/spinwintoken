@@ -257,6 +257,12 @@
 
 <script>
 
+  function closePopup() {
+  const box = document.getElementById("popupBox");
+  box.style.display = "none";
+  box.innerHTML = "";
+}
+  
   const supabaseClient = supabase.createClient(
    "https://xqtegtfaowplgyanpjsa.supabase.co",
    "sb_publishable_mBzrAtBTUaUBcXsGpGzB9Q_93NnWOZG"
@@ -527,9 +533,11 @@
       costUSDT
     );
 
-    if (ok) {
-      alert("Purchase recorded. Now send USDT to complete payment.");
-      document.getElementById("popupBox").style.display = "none";
+   if (ok) {
+  alert("Purchase recorded. Now send USDT to complete payment.");
+  closePopup();
+}
+
     }
   }
 
