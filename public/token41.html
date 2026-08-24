@@ -526,10 +526,12 @@
       lockedPriceindex,
       costUSDT
     );
-
-   if (ok) {
+    
+if (ok) {
   alert("Purchase recorded. Now send USDT to complete payment.");
-  closePopup();
+  document.getElementById("popupBox").style.display = "none";
+}
+
 }
 
     }
