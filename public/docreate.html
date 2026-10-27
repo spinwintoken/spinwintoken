@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Create Account - SpinWinToken</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- reCAPTCHA -->
+  <script src="https://www.google.com/recaptcha/api.js?render=6Le0ew8tAAAAAMLEY9q16CLm6CsO8OqvBr88csI4"></script>
+
+  <script>
+    async function refreshRecaptchaToken() {
+      const token = await grecaptcha.execute(
+        "6Le0ew8tAAAAAMLEY9q16CLm6CsO8OqvBr88csI4",
+        { action: "signup" }
+      );
+      document.getElementById("recaptchaToken").value = token;
+    }
+
+    grecaptcha.ready(refreshRecaptchaToken);
+    setInterval(refreshRecaptchaToken, 120000);
+  </script>
+
+  <style>
+    body { font-family: Arial; background:#000; color:#ffd700; padding:40px; margin:0; }
+    .container { max-width:420px; margin:auto; background:#111; padding:30px; border-radius:12px; border:1px solid #ffd700; }
+    h1 { text-align:center; margin-bottom:25px; color:#ffd700; }
+    label { display:block; margin-top:12px; font-weight:bold; }
+    input { width:100%; padding:10px; margin-top:6px; background:#222; border:1px solid #ffd700; border-radius:6px; color:#ffd700; }
+    button { margin-top:20px; padding:12px; width:100%; background:#ffd700; color:#000; font-weight:bold; border:none; border-radius:6px; cursor:pointer; }
+    .message { margin-top:20px; font-size:1.4rem; font-weight:bold; text-align:center; }
+    .error { color:#ff4d4d; }
+    .success { color:#00ff88; }
+    .link { margin-top:18px; text-align:center; }
+    .link a { color:#00aaff; text-decoration:none; font-weight:bold; }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <h1>Create Account</h1>
+
+    <form id="createAccountForm">
+      <input type="hidden" id="recaptchaToken">
+
+      <label>Email</label>
+      <input type="email" id="email" required />
+
+      <label>Password</label>
+      <input type="password" id="password" required minlength="6" />
+
+      <label>Confirm Password</label>
+      <input type="password" id="confirmPassword" required minlength="6" />
+
+      <div id="refInfo" class="message" style="font-size:1rem; font-weight:normal;"></div>
+
+      <button type="submit">Create Account</button>
+    </form>
+
+    <div class="link">
+      Already have an account? <a href="signin.html">Sign In</a>
+    </div>
+
+    <div id="status" class="message"></div>
+  </div>
+
+  <script>
+    const form = document.getElementById("createAccountForm");
+    const statusEl = document.getElementById("status");
+
+    // Read referral from URL
+    const urlParams = new URLSearchParams(window.location.search);
+    let referred_by = urlParams.get("ref");
+
+    // REQUIRED: referred_by must ALWAYS exist
+    if (!referred_by || referred_by.trim() === "") {
+      referred_by = "SPINROOT"; // system default
+    }
+
+    // enforce max 50 chars (your DB column limit)
+    referred_by = referred_by.substring(0, 50);
+
+    document.getElementById("refInfo").textContent = "Referral: " + referred_by;
+
+    // Generate referral_code (max 50 chars)
+    function generateReferralCode() {
+      return "SW" + Math.random().toString(36).substring(2, 10).toUpperCase();
+    }
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      statusEl.textContent = "";
+      statusEl.className = "message";
+
+      const email = document.getElementById("email").value.trim();
+      const password = document.getElementById("password").value;
+      const confirmPassword = document.getElementById("confirmPassword").value;
+      const captchaToken = document.getElementById("recaptchaToken").value;
+
+      if (!captchaToken) {
+        statusEl.textContent = "reCAPTCHA failed. Please refresh.";
+        statusEl.classList.add("error");
+        return;
+      }
+
+      if (password !== confirmPassword) {
+        statusEl.textContent = "Passwords do not match.";
+        statusEl.classList.add("error");
+        return;
+      }
+
+      const referral_code = generateReferralCode();
+
+      statusEl.textContent = "Creating account...";
+      statusEl.className = "message";
+
+      try {
+        const response = await fetch("https://YOUR_DOMAIN/api/create-account", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            email,
+            password,
+            referral_code,
+            referred_by,
+            captcha: captchaToken
+          })
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+          statusEl.textContent = "Account created! Please check your email to verify.";
+          statusEl.classList.add("success");
+          form.reset();
+        } else {
+          statusEl.textContent = result.message || "Signup failed.";
+          statusEl.classList.add("error");
+        }
+
+      } catch (err) {
+        statusEl.textContent = "Server error. Try again later.";
+        statusEl.classList.add("error");
+      }
+    });
+  </script>
+</body>
+</html>
