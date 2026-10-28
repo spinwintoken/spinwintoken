@@ -5,13 +5,13 @@
   <title>Create Account - SpinWinToken</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <!-- reCAPTCHA -->
-  <script src="https://www.google.com/recaptcha/api.js?render=6Le0ew8tAAAAAMLEY9q16CLm6CsO8OqvBr88csI4"></script>
+  <!-- FIXED reCAPTCHA SITE KEY -->
+  <script src="https://www.google.com/recaptcha/api.js?render=6Le7yAQuAAAAAP17lnwipAvHhdb1GD-pJ9Ktcxbu"></script>
 
   <script>
     async function refreshRecaptchaToken() {
       const token = await grecaptcha.execute(
-        "6Le0ew8tAAAAAMLEY9q16CLm6CsO8OqvBr88csI4",
+        "6Le7yAQuAAAAAP17lnwipAvHhdb1GD-pJ9Ktcxbu",
         { action: "signup" }
       );
       document.getElementById("recaptchaToken").value = token;
@@ -72,17 +72,13 @@
     const urlParams = new URLSearchParams(window.location.search);
     let referred_by = urlParams.get("ref");
 
-    // REQUIRED: referred_by must ALWAYS exist
     if (!referred_by || referred_by.trim() === "") {
-      referred_by = "SPINROOT"; // system default
+      referred_by = "SPINROOT";
     }
 
-    // enforce max 50 chars (your DB column limit)
     referred_by = referred_by.substring(0, 50);
-
     document.getElementById("refInfo").textContent = "Referral: " + referred_by;
 
-    // Generate referral_code (max 50 chars)
     function generateReferralCode() {
       return "SW" + Math.random().toString(36).substring(2, 10).toUpperCase();
     }
@@ -131,7 +127,7 @@
         const result = await response.json();
 
         if (result.success) {
-          statusEl.textContent = "Account created! Please check your email to verify.";
+          statusEl.textContent = "Account created!";
           statusEl.classList.add("success");
           form.reset();
         } else {
